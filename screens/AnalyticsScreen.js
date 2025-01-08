@@ -1,4 +1,3 @@
-// screens/AnalyticsScreen.js
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -12,6 +11,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LineChart } from "react-native-chart-kit";
+import { ChevronIcon } from "./components/ChevronIcon";
 import PropTypes from "prop-types";
 
 const screenWidth = Dimensions.get("window").width;
@@ -96,31 +96,40 @@ export default function AnalyticsScreen({ route, navigation }) {
     };
   };
 
+  const stats = calculateStats();
+
   const chartConfig = {
-    backgroundGradientFrom: "#1C1C1E",
-    backgroundGradientTo: "#1C1C1E",
-    color: (opacity = 1) => `rgba(0, 255, 0, ${opacity})`,
+    backgroundColor: "#1E1E1E",
+    backgroundGradientFrom: "#1E1E1E",
+    backgroundGradientTo: "#1E1E1E",
+    decimalPlaces: 0,
+    color: (opacity = 1) => `rgba(52, 152, 219, ${opacity})`, // Blue color
     style: {
       borderRadius: 16,
+    },
+    propsForBackgroundLines: {
+      strokeWidth: 1,
+      stroke: "#2D2D2D",
+    },
+    propsForLabels: {
+      fill: "#B3B3B3",
     },
     propsForDots: {
       r: "6",
       strokeWidth: "2",
-      stroke: "#00FF00",
+      stroke: "#3498db",
     },
   };
 
   const repsChartConfig = {
     ...chartConfig,
-    color: (opacity = 1) => `rgba(255, 165, 0, ${opacity})`,
+    color: (opacity = 1) => `rgba(46, 204, 113, ${opacity})`, // Green color
     propsForDots: {
       r: "6",
       strokeWidth: "2",
-      stroke: "#FFA500",
+      stroke: "#2ecc71",
     },
   };
-
-  const stats = calculateStats();
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -128,8 +137,12 @@ export default function AnalyticsScreen({ route, navigation }) {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>Back</Text>
+        <TouchableOpacity
+          style={styles.backButtonContainer}
+          onPress={() => navigation.goBack()}
+        >
+          <ChevronIcon size={28} color="#3498db" />
+          <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{exercise.name} Analytics</Text>
         <View style={{ width: 50 }} />
@@ -139,11 +152,17 @@ export default function AnalyticsScreen({ route, navigation }) {
       <View style={styles.statsContainer}>
         <View style={styles.statCard}>
           <Text style={styles.statLabel}>Max Weight</Text>
-          <Text style={styles.statValue}>{stats.max} lb</Text>
+          <Text style={styles.statValue}>
+            {stats.max}
+            <Text style={styles.statUnit}> lb</Text>
+          </Text>
         </View>
         <View style={styles.statCard}>
           <Text style={styles.statLabel}>Average Weight</Text>
-          <Text style={styles.statValue}>{stats.average} lb</Text>
+          <Text style={styles.statValue}>
+            {stats.average}
+            <Text style={styles.statUnit}> lb</Text>
+          </Text>
         </View>
       </View>
 
@@ -151,14 +170,22 @@ export default function AnalyticsScreen({ route, navigation }) {
         {/* Weight Progress Chart */}
         <View style={styles.chartContainer}>
           <Text style={styles.chartTitle}>Weight Progress</Text>
+          <Text style={styles.chartSubtitle}>Last 7 sets</Text>
           {weightData.labels.length > 0 && (
             <LineChart
               data={weightData}
-              width={screenWidth - 64}
+              width={screenWidth - 48}
               height={220}
               chartConfig={chartConfig}
               bezier
               style={styles.chart}
+              withInnerLines={true}
+              withOuterLines={true}
+              withVerticalLines={false}
+              withHorizontalLines={true}
+              withVerticalLabels={true}
+              withHorizontalLabels={true}
+              fromZero={true}
             />
           )}
         </View>
@@ -166,14 +193,22 @@ export default function AnalyticsScreen({ route, navigation }) {
         {/* Reps Progress Chart */}
         <View style={styles.chartContainer}>
           <Text style={styles.chartTitle}>Reps Progress</Text>
+          <Text style={styles.chartSubtitle}>Last 7 sets</Text>
           {repsData.labels.length > 0 && (
             <LineChart
               data={repsData}
-              width={screenWidth - 64}
+              width={screenWidth - 48}
               height={220}
               chartConfig={repsChartConfig}
               bezier
               style={styles.chart}
+              withInnerLines={true}
+              withOuterLines={true}
+              withVerticalLines={false}
+              withHorizontalLines={true}
+              withVerticalLabels={true}
+              withHorizontalLabels={true}
+              fromZero={true}
             />
           )}
         </View>
@@ -181,6 +216,117 @@ export default function AnalyticsScreen({ route, navigation }) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#121212",
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    marginBottom: 8,
+  },
+  backButtonContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  backButtonText: {
+    color: "#3498db",
+    fontSize: 17,
+    marginLeft: 4,
+    fontWeight: "600",
+  },
+  headerTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "bold",
+    flex: 1,
+    textAlign: "center",
+    marginLeft: -28,
+  },
+  statsContainer: {
+    flexDirection: "row",
+    padding: 16,
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  statCard: {
+    backgroundColor: "#1E1E1E",
+    borderRadius: 16,
+    padding: 20,
+    flex: 1,
+    marginHorizontal: 8,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  statLabel: {
+    color: "#B3B3B3",
+    fontSize: 15,
+    fontWeight: "500",
+    marginBottom: 8,
+  },
+  statValue: {
+    color: "#FFFFFF",
+    fontSize: 28,
+    fontWeight: "bold",
+  },
+  statUnit: {
+    color: "#B3B3B3",
+    fontSize: 20,
+    fontWeight: "normal",
+  },
+  scrollContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  chartContainer: {
+    backgroundColor: "#1E1E1E",
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  chartTitle: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  chartSubtitle: {
+    color: "#B3B3B3",
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  chart: {
+    marginVertical: 8,
+    borderRadius: 16,
+  },
+  noDataText: {
+    color: "#B3B3B3",
+    fontSize: 16,
+    textAlign: "center",
+    marginVertical: 40,
+  },
+});
 
 AnalyticsScreen.propTypes = {
   route: PropTypes.shape({
@@ -194,69 +340,3 @@ AnalyticsScreen.propTypes = {
     goBack: PropTypes.func.isRequired,
   }).isRequired,
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#000000",
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-  },
-  backButton: {
-    color: "#00FF00",
-    fontSize: 17,
-  },
-  headerTitle: {
-    color: "#FFFFFF",
-    fontSize: 17,
-    fontWeight: "bold",
-  },
-  statsContainer: {
-    flexDirection: "row",
-    padding: 16,
-    justifyContent: "space-between",
-  },
-  statCard: {
-    backgroundColor: "#1C1C1E",
-    borderRadius: 10,
-    padding: 16,
-    flex: 1,
-    marginHorizontal: 8,
-    alignItems: "center",
-  },
-  statLabel: {
-    color: "#8E8E93",
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  statValue: {
-    color: "#FFFFFF",
-    fontSize: 24,
-    fontWeight: "bold",
-  },
-  scrollContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  chartContainer: {
-    backgroundColor: "#1C1C1E",
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 16,
-    alignItems: "center",
-  },
-  chartTitle: {
-    color: "#FFFFFF",
-    fontSize: 17,
-    fontWeight: "bold",
-    marginBottom: 16,
-  },
-  chart: {
-    borderRadius: 10,
-    marginVertical: 8,
-  },
-});

@@ -195,59 +195,75 @@ AddSetScreen.propTypes = {
     goBack: PropTypes.func.isRequired,
   }).isRequired,
 };
+
+// Update these styles in AddSetScreen.js
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000000",
+    backgroundColor: "#121212",
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     padding: 16,
+    marginBottom: 8,
   },
   backButton: {
-    color: "#00FF00",
+    color: "#3498db",
     fontSize: 17,
+    fontWeight: "600",
   },
   headerTitle: {
     color: "#FFFFFF",
-    fontSize: 17,
+    fontSize: 20,
     fontWeight: "bold",
   },
   moreButton: {
-    color: "#FFFFFF",
-    fontSize: 17,
+    color: "#B3B3B3",
+    fontSize: 20,
   },
   inputContainer: {
-    padding: 16,
+    padding: 20,
   },
   inputLabel: {
-    color: "#8E8E93",
-    fontSize: 13,
-    marginBottom: 8,
+    color: "#B3B3B3",
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 12,
+    letterSpacing: 0.5,
   },
   valueContainer: {
     flexDirection: "row",
-    backgroundColor: "#1C1C1E",
-    borderRadius: 10,
-    marginBottom: 16,
-    padding: 8,
+    backgroundColor: "#1E1E1E",
+    borderRadius: 16,
+    marginBottom: 24,
+    padding: 12,
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "#FFA500",
+    borderColor: "#3498db",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   valueContainerInactive: {
     borderColor: "transparent",
   },
   incrementButton: {
-    padding: 8,
-    width: 44,
+    padding: 12,
+    width: 48,
     alignItems: "center",
   },
   incrementButtonText: {
     color: "#FFFFFF",
     fontSize: 24,
+    fontWeight: "600",
   },
   valueDisplay: {
     flex: 1,
@@ -257,30 +273,43 @@ const styles = StyleSheet.create({
   },
   valueText: {
     color: "#FFFFFF",
-    fontSize: 24,
+    fontSize: 28,
+    fontWeight: "600",
     marginRight: 8,
   },
   unitText: {
-    color: "#8E8E93",
+    color: "#B3B3B3",
     fontSize: 24,
   },
   recordButton: {
-    backgroundColor: "#00FF00",
-    borderRadius: 10,
-    padding: 16,
+    backgroundColor: "#3498db",
+    borderRadius: 16,
+    padding: 18,
     alignItems: "center",
-    marginTop: 16,
+    marginTop: 24,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   recordButtonText: {
-    color: "#000000",
+    color: "#FFFFFF",
     fontSize: 17,
-    fontWeight: "bold",
+    fontWeight: "600",
   },
   numPad: {
     flexDirection: "row",
     flexWrap: "wrap",
     padding: 16,
     marginTop: "auto",
+    backgroundColor: "#1E1E1E",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingBottom: 32,
   },
   numButton: {
     width: "33.33%",
@@ -290,6 +319,7 @@ const styles = StyleSheet.create({
   },
   numButtonText: {
     color: "#FFFFFF",
-    fontSize: 24,
+    fontSize: 28,
+    fontWeight: "500",
   },
 });

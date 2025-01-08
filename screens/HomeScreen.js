@@ -108,7 +108,7 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.tabText}>Sessions</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabItem}>
-          <Text style={styles.tabText}>Today</Text>
+          <Text style={styles.tabText}>Weight</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -124,31 +124,42 @@ HomeScreen.propTypes = {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000000",
+    backgroundColor: "#121212",
   },
   header: {
     padding: 16,
+    marginBottom: 8,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "bold",
     color: "#FFFFFF",
+    marginLeft: 4,
   },
   tipContainer: {
-    backgroundColor: "#1C1C1E",
+    backgroundColor: "#1E1E1E",
     margin: 16,
-    padding: 16,
-    borderRadius: 10,
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   tipTitle: {
     color: "#FFFFFF",
     fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 4,
+    fontWeight: "600",
+    marginBottom: 8,
   },
   tipText: {
-    color: "#8E8E93",
+    color: "#B3B3B3",
     fontSize: 16,
+    lineHeight: 22,
   },
   list: {
     flex: 1,
@@ -158,49 +169,69 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 16,
-    backgroundColor: "#1C1C1E",
-    marginVertical: 4,
-    borderRadius: 10,
+    padding: 20,
+    backgroundColor: "#1E1E1E",
+    marginVertical: 6,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+    elevation: 3,
   },
   exerciseName: {
     color: "#FFFFFF",
     fontSize: 17,
-    fontWeight: "500",
+    fontWeight: "600",
   },
   lastUsed: {
-    color: "#8E8E93",
+    color: "#3498db",
     fontSize: 15,
   },
   addButton: {
-    backgroundColor: "#1C1C1E",
+    backgroundColor: "#1E1E1E",
     margin: 16,
-    padding: 16,
-    borderRadius: 10,
+    padding: 18,
+    borderRadius: 16,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#3498db",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   addButtonText: {
-    color: "#00FF00",
+    color: "#3498db",
     fontSize: 17,
-    fontWeight: "500",
+    fontWeight: "600",
   },
   tabBar: {
     flexDirection: "row",
-    backgroundColor: "#1C1C1E",
+    backgroundColor: "#1E1E1E",
     paddingBottom: 34,
-    borderTopWidth: 0.5,
-    borderTopColor: "#38383A",
+    borderTopWidth: 1,
+    borderTopColor: "#2D2D2D",
   },
   tabItem: {
     flex: 1,
     alignItems: "center",
-    paddingVertical: 8,
+    paddingVertical: 12,
   },
   tabText: {
-    color: "#8E8E93",
+    color: "#B3B3B3",
     fontSize: 14,
+    fontWeight: "500",
   },
   tabTextActive: {
-    color: "#00FF00",
+    color: "#3498db",
+    fontWeight: "600",
   },
 });
