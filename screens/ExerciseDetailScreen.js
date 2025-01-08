@@ -1,4 +1,3 @@
-// screens/ExerciseDetailScreen.js
 import React, { useState } from "react";
 import {
   View,
@@ -9,14 +8,60 @@ import {
   StatusBar,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
+import PropTypes from "prop-types";
 
 export default function ExerciseDetailScreen({ route, navigation }) {
   const insets = useSafeAreaInsets();
   const { exercise } = route.params;
-  const [sets, setSets] = useState([
-    { id: "1", time: "3:40 PM", reps: 2, weight: 235 },
-    { id: "2", time: "3:40 PM", reps: 4, weight: 225 },
-  ]);
+  const [sets, setSets] = useState([]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadSets();
+    }, [exercise.name])
+  );
+
+  const loadSets = async () => {
+    try {
+      const setsJson = await AsyncStorage.getItem("@workout_sets");
+      if (setsJson) {
+        const allSets = JSON.parse(setsJson);
+        const exerciseSets = allSets
+          .filter((set) => set.exercise === exercise.name)
+          .sort((a, b) => new Date(b.date) - new Date(a.date));
+        setSets(exerciseSets);
+      }
+    } catch (error) {
+      console.error("Error loading sets:", error);
+    }
+  };
+
+  // Update the groupSetsByDay function in ExerciseDetailScreen.js
+  const groupSetsByDay = () => {
+    const grouped = {};
+    sets.forEach((set) => {
+      const date = new Date(set.date);
+      const day = date
+        .toLocaleDateString("en-US", { weekday: "long" })
+        .toUpperCase();
+      if (!grouped[day]) {
+        grouped[day] = [];
+      }
+      grouped[day].push({
+        ...set,
+        time: date.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        }),
+      });
+    });
+    return grouped;
+  };
+
+  const groupedSets = groupSetsByDay();
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -55,32 +100,56 @@ export default function ExerciseDetailScreen({ route, navigation }) {
       </View>
 
       {/* Sets List */}
-      <View style={styles.setsContainer}>
-        <Text style={styles.dayHeader}>SUNDAY</Text>
-        {sets.map((set) => (
-          <TouchableOpacity key={set.id} style={styles.setItem}>
-            <Text style={styles.setTime}>{set.time}</Text>
-            <View style={styles.setDetails}>
-              <Text style={styles.setReps}>
-                {set.reps}
-                <Text style={styles.setLabel}> rep</Text>
-              </Text>
-              <Text style={styles.setWeight}>
-                {set.weight}
-                <Text style={styles.setLabel}> lb</Text>
-              </Text>
-            </View>
-          </TouchableOpacity>
+      <ScrollView style={styles.setsContainer}>
+        {Object.entries(groupedSets).map(([day, daySets]) => (
+          <View key={day}>
+            <Text style={styles.dayHeader}>{day}</Text>
+            {daySets.map((set) => (
+              <TouchableOpacity key={set.id} style={styles.setItem}>
+                <Text style={styles.setTime}>{set.time}</Text>
+                <View style={styles.setDetails}>
+                  <Text style={styles.setReps}>
+                    {set.reps}
+                    <Text style={styles.setLabel}> rep</Text>
+                  </Text>
+                  <Text style={styles.setWeight}>
+                    {set.weight}
+                    <Text style={styles.setLabel}> lb</Text>
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
         ))}
-      </View>
+      </ScrollView>
 
-      {/* Add Set Button */}
-      <TouchableOpacity style={styles.addButton}>
+      {/* Add Button */}
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() =>
+          navigation.navigate("AddSet", { exerciseName: exercise.name })
+        }
+      >
         <Text style={styles.addButtonText}>+</Text>
       </TouchableOpacity>
     </View>
   );
 }
+
+// Add PropTypes validation
+ExerciseDetailScreen.propTypes = {
+  route: PropTypes.shape({
+    params: PropTypes.shape({
+      exercise: PropTypes.shape({
+        name: PropTypes.string.isRequired,
+      }).isRequired,
+    }).isRequired,
+  }).isRequired,
+  navigation: PropTypes.shape({
+    navigate: PropTypes.func.isRequired,
+    goBack: PropTypes.func.isRequired,
+  }).isRequired,
+};
 
 const styles = StyleSheet.create({
   container: {

@@ -1,14 +1,13 @@
-// screens/HomeScreen.js
 import React from "react";
 import {
   View,
-  FlatList,
+  Text,
   TouchableOpacity,
   StyleSheet,
-  Text,
   StatusBar,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import PropTypes from "prop-types";
 
 export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -20,13 +19,21 @@ export default function HomeScreen({ navigation }) {
     { id: "4", name: "Hammer Curls", lastUsed: "1w ago" },
   ];
 
-  const renderExercise = ({ item }) => (
+  const renderExercise = (exercise) => (
     <TouchableOpacity
+      key={exercise.id}
       style={styles.exerciseItem}
-      onPress={() => navigation.navigate("ExerciseDetail", { exercise: item })}
+      onPress={() =>
+        navigation.navigate("ExerciseDetail", {
+          exercise: {
+            id: exercise.id,
+            name: exercise.name,
+          },
+        })
+      }
     >
-      <Text style={styles.exerciseName}>{item.name}</Text>
-      <Text style={styles.lastUsed}>{item.lastUsed}</Text>
+      <Text style={styles.exerciseName}>{exercise.name}</Text>
+      <Text style={styles.lastUsed}>{exercise.lastUsed}</Text>
     </TouchableOpacity>
   );
 
@@ -48,18 +55,12 @@ export default function HomeScreen({ navigation }) {
       </View>
 
       {/* Exercise List */}
-      <FlatList
-        data={exercises}
-        renderItem={renderExercise}
-        keyExtractor={(item) => item.id}
-        style={styles.list}
-      />
+      <View style={styles.list}>
+        {exercises.map((exercise) => renderExercise(exercise))}
+      </View>
 
       {/* Add Exercise Button */}
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => navigation.navigate("AddExercise")}
-      >
+      <TouchableOpacity style={styles.addButton}>
         <Text style={styles.addButtonText}>+ Add Exercises</Text>
       </TouchableOpacity>
 
@@ -78,6 +79,12 @@ export default function HomeScreen({ navigation }) {
     </View>
   );
 }
+
+HomeScreen.propTypes = {
+  navigation: PropTypes.shape({
+    navigate: PropTypes.func.isRequired,
+  }).isRequired,
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -110,6 +117,7 @@ const styles = StyleSheet.create({
   },
   list: {
     flex: 1,
+    paddingHorizontal: 16,
   },
   exerciseItem: {
     flexDirection: "row",
@@ -117,7 +125,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 16,
     backgroundColor: "#1C1C1E",
-    marginHorizontal: 16,
     marginVertical: 4,
     borderRadius: 10,
   },
