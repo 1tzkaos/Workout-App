@@ -16,6 +16,7 @@ import {
   Swipeable,
 } from "react-native-gesture-handler";
 import PropTypes from "prop-types";
+import { ChevronIcon } from "./components/ChevronIcon";
 
 const formatLastUsed = (dateString) => {
   const now = new Date();
@@ -175,6 +176,7 @@ export default function ExerciseDetailScreen({ route, navigation }) {
 
     return (
       <Swipeable
+        key={set.id} // Add the key prop here
         ref={(ref) => (row[set.id] = ref)}
         renderRightActions={(progress, dragX) =>
           renderRightActions(progress, dragX, set.id)
@@ -233,8 +235,12 @@ export default function ExerciseDetailScreen({ route, navigation }) {
 
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.backButton}>Exercises</Text>
+          <TouchableOpacity
+            style={styles.backButtonContainer}
+            onPress={() => navigation.goBack()}
+          >
+            <ChevronIcon size={28} />
+            <Text style={styles.backButtonText}>Back</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{exercise.name}</Text>
           <TouchableOpacity>
@@ -322,11 +328,6 @@ const styles = StyleSheet.create({
   backButton: {
     color: "#00FF00",
     fontSize: 17,
-  },
-  headerTitle: {
-    color: "#FFFFFF",
-    fontSize: 17,
-    fontWeight: "bold",
   },
   moreButton: {
     color: "#FFFFFF",
@@ -418,21 +419,6 @@ const styles = StyleSheet.create({
     color: "#8E8E93",
     fontSize: 17,
   },
-  addButton: {
-    position: "absolute",
-    bottom: 40,
-    alignSelf: "center",
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#00FF00",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  addButtonText: {
-    fontSize: 32,
-    color: "#000000",
-  },
   deleteContainer: {
     marginBottom: 8,
     borderRadius: 10,
@@ -449,5 +435,52 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 17,
     fontWeight: "600",
+  },
+  backArrow: {
+    color: "#00FF00",
+    fontSize: 17,
+    marginRight: 4,
+    fontWeight: "bold",
+  },
+  backButtonText: {
+    color: "#00FF00",
+    fontSize: 17,
+    marginLeft: 2,
+    marginBottom: 5,
+    fontWeight: "bold",
+  },
+  backButtonContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+
+  headerTitle: {
+    color: "#FFFFFF",
+    fontSize: 17,
+    fontWeight: "bold",
+    flex: 1,
+    textAlign: "center",
+    marginLeft: -24, // Adjust based on the new icon size
+  },
+  addButton: {
+    position: "absolute",
+    bottom: 40,
+    alignSelf: "center",
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#00FF00",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingBottom: 2, // Fine-tune vertical centering of the + symbol
+  },
+  addButtonText: {
+    fontSize: 32,
+    color: "#000000",
+    textAlign: "center",
+    lineHeight: 34, // Helps center the + vertically
+    includeFontPadding: false, // Removes extra padding around text
   },
 });
