@@ -257,7 +257,14 @@ export default function ExerciseDetailScreen({ route, navigation }) {
 
         {/* Analytics and 1RM Section */}
         <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.actionItem}>
+          <TouchableOpacity
+            style={styles.actionItem}
+            onPress={() =>
+              navigation.navigate("Analytics", {
+                exercise: { name: exercise.name },
+              })
+            }
+          >
             <Text style={styles.actionIcon}>📈</Text>
             <Text style={styles.actionText}>Analytics</Text>
           </TouchableOpacity>
