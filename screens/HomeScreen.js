@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import PropTypes from "prop-types";
-
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 const formatLastUsed = (dateString) => {
   if (!dateString) return "";
   const now = new Date();
@@ -102,12 +102,23 @@ export default function HomeScreen({ navigation }) {
       {/* Bottom Tab Bar */}
       <View style={styles.tabBar}>
         <TouchableOpacity style={styles.tabItem}>
+          <MaterialCommunityIcons name="dumbbell" size={24} color="#3498db" />
           <Text style={[styles.tabText, styles.tabTextActive]}>Sets</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabItem}>
+          <MaterialCommunityIcons
+            name="timer-outline"
+            size={24}
+            color="#B3B3B3"
+          />
           <Text style={styles.tabText}>Sessions</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabItem}>
+          <MaterialCommunityIcons
+            name="scale-bathroom"
+            size={24}
+            color="#B3B3B3"
+          />
           <Text style={styles.tabText}>Weight</Text>
         </TouchableOpacity>
       </View>
@@ -223,12 +234,16 @@ const styles = StyleSheet.create({
   tabItem: {
     flex: 1,
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 8,
+  },
+  tabIcon: {
+    marginBottom: 4, // Adds space between icon and text
   },
   tabText: {
     color: "#B3B3B3",
     fontSize: 14,
     fontWeight: "500",
+    marginTop: 4, // Adds space between icon and text
   },
   tabTextActive: {
     color: "#3498db",
