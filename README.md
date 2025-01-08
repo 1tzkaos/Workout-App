@@ -1,12 +1,10 @@
-# Fitness Tracking Mobile App
+# Workout Tracker Mobile App
 
 ## Overview
 
-My friend didn't want to pay a subscription to track his workout data, so I just created the app vagain
-This is a React Native mobile application designed to help users track their workout exercises, sets, and progress. The app provides an intuitive interface for logging workout sets, viewing exercise history, and analyzing performance over time.
+This React Native mobile application was created to help my friend track workout data without paying for a subscription. It provides an intuitive interface for logging workout sets, viewing exercise history, and analyzing performance over time.
 
 ## Features
-
 ### Key Functionalities
 - Add and manage exercises
 - Log individual sets with weight and repetitions
@@ -56,8 +54,28 @@ The app uses AsyncStorage to persist data locally:
 - `@exercises`: Stores user's exercise list
 - `@workout_sets`: Stores individual workout sets
 
-## Installation
+## Project Structure
+```
+Workout-App/
+├── .expo/
+├── .idea/
+├── .vscode/
+├── android/
+│   ├── .gradle/
+│   └── app/
+│       └── src/
+│           ├── debug/
+│           └── main/
+│               ├── java/
+│               └── res/
+├── ios/
+│   ├── WorkoutTracker/
+│   └── WorkoutTracker.xcodeproj/
+└── screens/
+    └── components/
+```
 
+## Installation
 ### Prerequisites
 - Node.js
 - React Native CLI
@@ -80,15 +98,6 @@ The app uses AsyncStorage to persist data locally:
    npx react-native run-ios   # For iOS
    npx react-native run-android   # For Android
    ```
-
-## Project Structure
-- `screens/`: Contains all screen components
-  - `HomeScreen.js`
-  - `AddExerciseScreen.js`
-  - `ExerciseDetailScreen.js`
-  - `AddSetScreen.js`
-  - `AnalyticsScreen.js`
-- `components/`: Reusable UI components
 
 ## Customization
 - Modify `POPULAR_EXERCISES` in `AddExerciseScreen.js` to change default exercise list
