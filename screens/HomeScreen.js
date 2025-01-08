@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,17 +7,52 @@ import {
   StatusBar,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
 import PropTypes from "prop-types";
+
+const formatLastUsed = (dateString) => {
+  if (!dateString) return "";
+  const now = new Date();
+  const date = new Date(dateString);
+  const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+  return `${Math.floor(diffDays / 30)}m ago`;
+};
 
 export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
+  const [exercises, setExercises] = useState([
+    { id: "1", name: "Bench Press" },
+    { id: "2", name: "Squat" },
+    { id: "3", name: "Leg Press" },
+    { id: "4", name: "Hammer Curls" },
+  ]);
 
-  const exercises = [
-    { id: "1", name: "Bench Press", lastUsed: "3d ago" },
-    { id: "2", name: "Squat", lastUsed: "5d ago" },
-    { id: "3", name: "Leg Press", lastUsed: "1w ago" },
-    { id: "4", name: "Hammer Curls", lastUsed: "1w ago" },
-  ];
+  // Load exercises when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadExercises();
+    }, [])
+  );
+
+  const loadExercises = async () => {
+    try {
+      const exercisesJson = await AsyncStorage.getItem("@exercises");
+      if (!exercisesJson) {
+        // If no exercises exist in storage, save the default ones
+        await AsyncStorage.setItem("@exercises", JSON.stringify(exercises));
+      } else {
+        setExercises(JSON.parse(exercisesJson));
+      }
+    } catch (error) {
+      console.error("Error loading exercises:", error);
+    }
+  };
 
   const renderExercise = (exercise) => (
     <TouchableOpacity
@@ -33,7 +68,7 @@ export default function HomeScreen({ navigation }) {
       }
     >
       <Text style={styles.exerciseName}>{exercise.name}</Text>
-      <Text style={styles.lastUsed}>{exercise.lastUsed}</Text>
+      <Text style={styles.lastUsed}>{formatLastUsed(exercise.lastUsed)}</Text>
     </TouchableOpacity>
   );
 
@@ -152,7 +187,7 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: "row",
     backgroundColor: "#1C1C1E",
-    paddingBottom: 34, // Extra padding for bottom safe area
+    paddingBottom: 34,
     borderTopWidth: 0.5,
     borderTopColor: "#38383A",
   },

@@ -6,22 +6,58 @@ import {
   TouchableOpacity,
   ScrollView,
   StatusBar,
+  Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
+import {
+  GestureHandlerRootView,
+  Swipeable,
+} from "react-native-gesture-handler";
 import PropTypes from "prop-types";
+
+const formatLastUsed = (dateString) => {
+  const now = new Date();
+  const date = new Date(dateString);
+  const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+  return `${Math.floor(diffDays / 30)}m ago`;
+};
 
 export default function ExerciseDetailScreen({ route, navigation }) {
   const insets = useSafeAreaInsets();
   const { exercise } = route.params;
   const [sets, setSets] = useState([]);
+  const [lastUsed, setLastUsed] = useState(null);
 
   useFocusEffect(
     React.useCallback(() => {
       loadSets();
+      loadLastUsed();
     }, [exercise.name])
   );
+
+  const loadLastUsed = async () => {
+    try {
+      const exercisesJson = await AsyncStorage.getItem("@exercises");
+      if (exercisesJson) {
+        const exercises = JSON.parse(exercisesJson);
+        const currentExercise = exercises.find(
+          (ex) => ex.name === exercise.name
+        );
+        if (currentExercise?.lastUsed) {
+          setLastUsed(currentExercise.lastUsed);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading last used:", error);
+    }
+  };
 
   const loadSets = async () => {
     try {
@@ -38,7 +74,102 @@ export default function ExerciseDetailScreen({ route, navigation }) {
     }
   };
 
-  // Update the groupSetsByDay function in ExerciseDetailScreen.js
+  const deleteSet = async (setId) => {
+    try {
+      const setsJson = await AsyncStorage.getItem("@workout_sets");
+      if (setsJson) {
+        const allSets = JSON.parse(setsJson);
+        const updatedSets = allSets.filter((set) => set.id !== setId);
+        await AsyncStorage.setItem(
+          "@workout_sets",
+          JSON.stringify(updatedSets)
+        );
+
+        // Update local state
+        setSets((prevSets) => prevSets.filter((set) => set.id !== setId));
+
+        // Update last used timestamp
+        const newDate = new Date().toISOString();
+        await updateLastUsed(newDate);
+        setLastUsed(newDate);
+      }
+    } catch (error) {
+      console.error("Error deleting set:", error);
+    }
+  };
+
+  const updateLastUsed = async (dateString) => {
+    try {
+      const exercisesJson = await AsyncStorage.getItem("@exercises");
+      if (exercisesJson) {
+        const exercises = JSON.parse(exercisesJson);
+        const updatedExercises = exercises.map((ex) => {
+          if (ex.name === exercise.name) {
+            return {
+              ...ex,
+              lastUsed: dateString,
+            };
+          }
+          return ex;
+        });
+        await AsyncStorage.setItem(
+          "@exercises",
+          JSON.stringify(updatedExercises)
+        );
+      }
+    } catch (error) {
+      console.error("Error updating last used:", error);
+    }
+  };
+
+  const renderRightActions = (progress, dragX, setId) => {
+    const trans = dragX.interpolate({
+      inputRange: [-100, 0],
+      outputRange: [0, 100],
+    });
+
+    return (
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() => deleteSet(setId)}
+      >
+        <Animated.Text
+          style={[
+            styles.deleteButtonText,
+            {
+              transform: [{ translateX: trans }],
+            },
+          ]}
+        >
+          Delete
+        </Animated.Text>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderSet = (set) => (
+    <Swipeable
+      renderRightActions={(progress, dragX) =>
+        renderRightActions(progress, dragX, set.id)
+      }
+      overshootRight={false}
+    >
+      <View style={styles.setItem}>
+        <Text style={styles.setTime}>{set.time}</Text>
+        <View style={styles.setDetails}>
+          <Text style={styles.setReps}>
+            {set.reps}
+            <Text style={styles.setLabel}> rep</Text>
+          </Text>
+          <Text style={styles.setWeight}>
+            {set.weight}
+            <Text style={styles.setLabel}> lb</Text>
+          </Text>
+        </View>
+      </View>
+    </Swipeable>
+  );
+
   const groupSetsByDay = () => {
     const grouped = {};
     sets.forEach((set) => {
@@ -64,79 +195,73 @@ export default function ExerciseDetailScreen({ route, navigation }) {
   const groupedSets = groupSetsByDay();
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="light-content" />
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <StatusBar barStyle="light-content" />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>Exercises</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{exercise.name}</Text>
-        <TouchableOpacity>
-          <Text style={styles.moreButton}>•••</Text>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={styles.backButton}>Exercises</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{exercise.name}</Text>
+          <TouchableOpacity>
+            <Text style={styles.moreButton}>•••</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Last Used */}
+        {lastUsed && (
+          <Text style={styles.lastUsed}>
+            Last used: {formatLastUsed(lastUsed)}
+          </Text>
+        )}
+
+        {/* Analytics and 1RM Section */}
+        <View style={styles.quickActions}>
+          <TouchableOpacity style={styles.actionItem}>
+            <Text style={styles.actionIcon}>📈</Text>
+            <Text style={styles.actionText}>Analytics</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionItem}>
+            <Text style={styles.actionIcon}>🎯</Text>
+            <Text style={styles.actionText}>1RM</Text>
+            <Text style={styles.actionStatus}>Off</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Quick Tip */}
+        <View style={styles.tipContainer}>
+          <Text style={styles.tipTitle}>Repeat Sets Instantly</Text>
+          <Text style={styles.tipText}>
+            Swipe right to record the same set again.
+          </Text>
+        </View>
+
+        {/* Sets List */}
+        <ScrollView style={styles.setsContainer}>
+          {Object.entries(groupedSets).map(([day, daySets]) => (
+            <View key={day}>
+              <Text style={styles.dayHeader}>{day}</Text>
+              {daySets.map((set) => renderSet(set))}
+            </View>
+          ))}
+        </ScrollView>
+
+        {/* Add Button */}
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() =>
+            navigation.navigate("AddSet", { exerciseName: exercise.name })
+          }
+        >
+          <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>
       </View>
-
-      {/* Analytics and 1RM Section */}
-      <View style={styles.quickActions}>
-        <TouchableOpacity style={styles.actionItem}>
-          <Text style={styles.actionIcon}>📈</Text>
-          <Text style={styles.actionText}>Analytics</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionItem}>
-          <Text style={styles.actionIcon}>🎯</Text>
-          <Text style={styles.actionText}>1RM</Text>
-          <Text style={styles.actionStatus}>Off</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Quick Tip */}
-      <View style={styles.tipContainer}>
-        <Text style={styles.tipTitle}>Repeat Sets Instantly</Text>
-        <Text style={styles.tipText}>
-          Swipe right to record the same set again.
-        </Text>
-      </View>
-
-      {/* Sets List */}
-      <ScrollView style={styles.setsContainer}>
-        {Object.entries(groupedSets).map(([day, daySets]) => (
-          <View key={day}>
-            <Text style={styles.dayHeader}>{day}</Text>
-            {daySets.map((set) => (
-              <TouchableOpacity key={set.id} style={styles.setItem}>
-                <Text style={styles.setTime}>{set.time}</Text>
-                <View style={styles.setDetails}>
-                  <Text style={styles.setReps}>
-                    {set.reps}
-                    <Text style={styles.setLabel}> rep</Text>
-                  </Text>
-                  <Text style={styles.setWeight}>
-                    {set.weight}
-                    <Text style={styles.setLabel}> lb</Text>
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        ))}
-      </ScrollView>
-
-      {/* Add Button */}
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() =>
-          navigation.navigate("AddSet", { exerciseName: exercise.name })
-        }
-      >
-        <Text style={styles.addButtonText}>+</Text>
-      </TouchableOpacity>
-    </View>
+    </GestureHandlerRootView>
   );
 }
 
-// Add PropTypes validation
 ExerciseDetailScreen.propTypes = {
   route: PropTypes.shape({
     params: PropTypes.shape({
@@ -174,6 +299,12 @@ const styles = StyleSheet.create({
   moreButton: {
     color: "#FFFFFF",
     fontSize: 17,
+  },
+  lastUsed: {
+    color: "#8E8E93",
+    fontSize: 14,
+    textAlign: "center",
+    marginBottom: 8,
   },
   quickActions: {
     backgroundColor: "#1C1C1E",
@@ -269,5 +400,18 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontSize: 32,
     color: "#000000",
+  },
+  deleteButton: {
+    backgroundColor: "#FF3B30",
+    justifyContent: "center",
+    alignItems: "flex-end",
+    width: 100,
+    height: "100%",
+  },
+  deleteButtonText: {
+    color: "white",
+    fontSize: 17,
+    fontWeight: "600",
+    padding: 20,
   },
 });
