@@ -123,52 +123,84 @@ export default function ExerciseDetailScreen({ route, navigation }) {
   };
 
   const renderRightActions = (progress, dragX, setId) => {
-    const trans = dragX.interpolate({
+    const scale = dragX.interpolate({
       inputRange: [-100, 0],
-      outputRange: [0, 100],
+      outputRange: [1, 0],
+      extrapolate: "clamp",
+    });
+
+    const opacity = progress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 1],
     });
 
     return (
-      <TouchableOpacity
-        style={styles.deleteButton}
-        onPress={() => deleteSet(setId)}
+      <Animated.View
+        style={[
+          styles.deleteContainer,
+          {
+            opacity: opacity,
+          },
+        ]}
       >
-        <Animated.Text
-          style={[
-            styles.deleteButtonText,
-            {
-              transform: [{ translateX: trans }],
-            },
-          ]}
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => deleteSet(setId)}
         >
-          Delete
-        </Animated.Text>
-      </TouchableOpacity>
+          <Animated.Text
+            style={[
+              styles.deleteButtonText,
+              {
+                transform: [{ scale }],
+              },
+            ]}
+          >
+            Delete
+          </Animated.Text>
+        </TouchableOpacity>
+      </Animated.View>
     );
   };
 
-  const renderSet = (set) => (
-    <Swipeable
-      renderRightActions={(progress, dragX) =>
-        renderRightActions(progress, dragX, set.id)
+  const renderSet = (set) => {
+    let row = [];
+    let prevOpenedRow;
+
+    const closeRow = (index) => {
+      if (prevOpenedRow && prevOpenedRow !== row[index]) {
+        prevOpenedRow.close();
       }
-      overshootRight={false}
-    >
-      <View style={styles.setItem}>
-        <Text style={styles.setTime}>{set.time}</Text>
-        <View style={styles.setDetails}>
-          <Text style={styles.setReps}>
-            {set.reps}
-            <Text style={styles.setLabel}> rep</Text>
-          </Text>
-          <Text style={styles.setWeight}>
-            {set.weight}
-            <Text style={styles.setLabel}> lb</Text>
-          </Text>
+      prevOpenedRow = row[index];
+    };
+
+    return (
+      <Swipeable
+        ref={(ref) => (row[set.id] = ref)}
+        renderRightActions={(progress, dragX) =>
+          renderRightActions(progress, dragX, set.id)
+        }
+        onSwipeableOpen={() => closeRow(set.id)}
+        overshootRight={false}
+        rightThreshold={40}
+        friction={2}
+        useNativeAnimations
+      >
+        <View style={styles.setItem}>
+          <Text style={styles.setTime}>{set.time}</Text>
+          <View style={styles.setDetails}>
+            <Text style={styles.setReps}>
+              {set.reps}
+              <Text style={styles.setLabel}> rep</Text>
+            </Text>
+            <Text style={styles.setWeight}>
+              {set.weight}
+              <Text style={styles.setLabel}> lb</Text>
+            </Text>
+          </View>
         </View>
-      </View>
-    </Swipeable>
-  );
+      </Swipeable>
+    );
+  };
 
   const groupSetsByDay = () => {
     const grouped = {};
@@ -401,17 +433,21 @@ const styles = StyleSheet.create({
     fontSize: 32,
     color: "#000000",
   },
+  deleteContainer: {
+    marginBottom: 8,
+    borderRadius: 10,
+    overflow: "hidden",
+  },
   deleteButton: {
     backgroundColor: "#FF3B30",
     justifyContent: "center",
-    alignItems: "flex-end",
-    width: 100,
+    alignItems: "center",
+    width: 80,
     height: "100%",
   },
   deleteButtonText: {
     color: "white",
     fontSize: 17,
     fontWeight: "600",
-    padding: 20,
   },
 });
