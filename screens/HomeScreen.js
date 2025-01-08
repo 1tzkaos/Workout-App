@@ -94,8 +94,10 @@ export default function HomeScreen({ navigation }) {
         {exercises.map((exercise) => renderExercise(exercise))}
       </View>
 
-      {/* Add Exercise Button */}
-      <TouchableOpacity style={styles.addButton}>
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => navigation.navigate("AddExercise")}
+      >
         <Text style={styles.addButtonText}>+ Add Exercises</Text>
       </TouchableOpacity>
 

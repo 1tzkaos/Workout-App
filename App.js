@@ -7,6 +7,7 @@ import HomeScreen from "./screens/HomeScreen";
 import ExerciseDetailScreen from "./screens/ExerciseDetailScreen";
 import AddSetScreen from "./screens/AddSetScreen";
 import AnalyticsScreen from "./screens/AnalyticsScreen";
+import AddExerciseScreen from "./screens/AddExerciseScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -27,6 +28,14 @@ export default function App() {
           />
           <Stack.Screen name="AddSet" component={AddSetScreen} />
           <Stack.Screen name="Analytics" component={AnalyticsScreen} />
+          <Stack.Screen
+            name="AddExercise"
+            component={AddExerciseScreen}
+            options={{
+              presentation: "modal",
+              animation: "slide_from_bottom",
+            }}
+          />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
