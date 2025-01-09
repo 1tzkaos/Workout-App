@@ -111,12 +111,12 @@ function SwipeableNavigator({ children, navigation }) {
 
   const translatePrev = pan.interpolate({
     inputRange: [-layout.width, 0, layout.width],
-    outputRange: [-layout.width, -layout.width * 0.3, 0],
+    outputRange: [-layout.width, -layout.width, 0],
   });
 
   const translateNext = pan.interpolate({
     inputRange: [-layout.width, 0, layout.width],
-    outputRange: [0, layout.width * 0.3, layout.width],
+    outputRange: [0, layout.width, layout.width],
   });
 
   const panResponder = PanResponder.create({
@@ -127,31 +127,21 @@ function SwipeableNavigator({ children, navigation }) {
       pan.setValue(gestureState.dx);
     },
     onPanResponderRelease: (_, gestureState) => {
-      const threshold = layout.width * 0.3;
-      if (Math.abs(gestureState.dx) > threshold) {
-        const toValue = gestureState.dx > 0 ? layout.width : -layout.width;
+      // Only navigate if the touch is released
+      if (Math.abs(gestureState.dx) > layout.width * 0.5) {
         const navigateTo = gestureState.dx > 0 ? screens.prev : screens.next;
-
-        Animated.timing(pan, {
-          toValue,
-          useNativeDriver: true,
-          duration: 300,
-        }).start(() => {
-          setTimeout(() => {
-            if (navigateTo) {
-              navigation.navigate(navigateTo);
-            }
-            pan.setValue(0);
-          }, 50);
-        });
-      } else {
-        Animated.spring(pan, {
-          toValue: 0,
-          useNativeDriver: true,
-          tension: 65,
-          friction: 11,
-        }).start();
+        if (navigateTo) {
+          navigation.navigate(navigateTo);
+        }
       }
+
+      // Always animate back to origin if released
+      Animated.spring(pan, {
+        toValue: 0,
+        useNativeDriver: true,
+        tension: 65,
+        friction: 11,
+      }).start();
     },
   });
 
