@@ -8,6 +8,7 @@ import ExerciseDetailScreen from "./screens/ExerciseDetailScreen";
 import AddSetScreen from "./screens/AddSetScreen";
 import AnalyticsScreen from "./screens/AnalyticsScreen";
 import AddExerciseScreen from "./screens/AddExerciseScreen";
+import FoodScreen from "./screens/FoodScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -19,9 +20,13 @@ export default function App() {
           screenOptions={{
             headerShown: false,
             contentStyle: { backgroundColor: "#000000" },
+            gestureEnabled: true,
+            gestureDirection: "horizontal",
+            animation: "slide_from_right",
           }}
         >
           <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="Food" component={FoodScreen} />
           <Stack.Screen
             name="ExerciseDetail"
             component={ExerciseDetailScreen}

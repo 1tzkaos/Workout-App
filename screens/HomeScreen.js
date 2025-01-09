@@ -202,17 +202,19 @@ export default function HomeScreen({ navigation }) {
 
       {/* Bottom Tab Bar */}
       <View style={styles.tabBar}>
-        <TouchableOpacity style={styles.tabItem}>
+        <TouchableOpacity
+          style={styles.tabItem}
+          onPress={() => navigation.navigate("Home")}
+        >
           <MaterialCommunityIcons name="dumbbell" size={24} color="#3498db" />
           <Text style={[styles.tabText, styles.tabTextActive]}>Sets</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem}>
-          <MaterialCommunityIcons
-            name="timer-outline"
-            size={24}
-            color="#B3B3B3"
-          />
-          <Text style={styles.tabText}>Sessions</Text>
+        <TouchableOpacity
+          style={styles.tabItem}
+          onPress={() => navigation.navigate("Food")}
+        >
+          <MaterialCommunityIcons name="food-apple" size={24} color="#B3B3B3" />
+          <Text style={styles.tabText}>Food</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabItem}>
           <MaterialCommunityIcons
@@ -284,7 +286,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
-    paddingBottom: 16, // Add padding at the bottom
+    paddingBottom: 16,
   },
   exerciseItem: {
     flexDirection: "row",
@@ -340,20 +342,24 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: "row",
     backgroundColor: "#1E1E1E",
-    paddingBottom: 34,
+    paddingTop: 12,
+    paddingBottom: 28,
     borderTopWidth: 1,
     borderTopColor: "#2D2D2D",
+    justifyContent: "space-around",
   },
   tabItem: {
-    flex: 1,
+    minWidth: 80,
     alignItems: "center",
-    paddingVertical: 8,
+    justifyContent: "center",
+    paddingHorizontal: 12,
   },
   tabText: {
     color: "#B3B3B3",
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "500",
-    marginTop: 4,
+    marginTop: 6,
+    textAlign: "center",
   },
   tabTextActive: {
     color: "#3498db",
