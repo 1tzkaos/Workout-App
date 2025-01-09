@@ -199,32 +199,6 @@ export default function HomeScreen({ navigation }) {
           </TouchableOpacity>
         </View>
       </View>
-
-      {/* Bottom Tab Bar */}
-      <View style={styles.tabBar}>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => navigation.navigate("Home")}
-        >
-          <MaterialCommunityIcons name="dumbbell" size={24} color="#3498db" />
-          <Text style={[styles.tabText, styles.tabTextActive]}>Sets</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => navigation.navigate("Food")}
-        >
-          <MaterialCommunityIcons name="food-apple" size={24} color="#B3B3B3" />
-          <Text style={styles.tabText}>Food</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem}>
-          <MaterialCommunityIcons
-            name="scale-bathroom"
-            size={24}
-            color="#B3B3B3"
-          />
-          <Text style={styles.tabText}>Weight</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
@@ -279,7 +253,7 @@ const styles = StyleSheet.create({
   },
   mainContainer: {
     flex: 1,
-    marginBottom: 0,
+    marginBottom: 16, // Add bottom margin to account for tab bar
   },
   listContainer: {
     flex: 1,
@@ -337,32 +311,6 @@ const styles = StyleSheet.create({
   addButtonText: {
     color: "#3498db",
     fontSize: 17,
-    fontWeight: "600",
-  },
-  tabBar: {
-    flexDirection: "row",
-    backgroundColor: "#1E1E1E",
-    paddingTop: 12,
-    paddingBottom: 28,
-    borderTopWidth: 1,
-    borderTopColor: "#2D2D2D",
-    justifyContent: "space-around",
-  },
-  tabItem: {
-    minWidth: 80,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 12,
-  },
-  tabText: {
-    color: "#B3B3B3",
-    fontSize: 13,
-    fontWeight: "500",
-    marginTop: 6,
-    textAlign: "center",
-  },
-  tabTextActive: {
-    color: "#3498db",
     fontWeight: "600",
   },
 });
