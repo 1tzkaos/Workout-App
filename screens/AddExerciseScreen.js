@@ -155,13 +155,13 @@ export default function AddExerciseScreen({ navigation }) {
                   {exercise}
                 </Text>
               </View>
-              <View
+              {/* <View
                 style={[
                   styles.circleIndicator,
                   existingExercises.has(exercise) &&
                     styles.circleIndicatorDisabled,
                 ]}
-              />
+              /> */}
             </TouchableOpacity>
           ))}
         </ScrollView>
