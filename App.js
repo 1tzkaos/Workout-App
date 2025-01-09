@@ -1,11 +1,3 @@
-import HomeScreen from "./screens/HomeScreen";
-import ExerciseDetailScreen from "./screens/ExerciseDetailScreen";
-import AddSetScreen from "./screens/AddSetScreen";
-import AnalyticsScreen from "./screens/AnalyticsScreen";
-import AddExerciseScreen from "./screens/AddExerciseScreen";
-import FoodScreen from "./screens/FoodScreen";
-
-// App.js
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -17,10 +9,16 @@ import {
   Text,
   Animated,
   PanResponder,
-  TouchableOpacity,
   useWindowDimensions,
   StyleSheet,
 } from "react-native";
+
+import HomeScreen from "./screens/HomeScreen";
+import ExerciseDetailScreen from "./screens/ExerciseDetailScreen";
+import AddSetScreen from "./screens/AddSetScreen";
+import AnalyticsScreen from "./screens/AnalyticsScreen";
+import AddExerciseScreen from "./screens/AddExerciseScreen";
+import FoodScreen from "./screens/FoodScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -187,7 +185,7 @@ export default function App() {
     <SafeAreaProvider>
       <NavigationContainer>
         <Tab.Navigator
-          screenOptions={({ navigation }) => ({
+          screenOptions={({ route }) => ({
             headerShown: false,
             tabBarStyle: {
               backgroundColor: "#1E1E1E",
@@ -201,19 +199,6 @@ export default function App() {
               fontSize: 13,
               fontWeight: "500",
             },
-            tabBarButton: (props) => (
-              <TouchableOpacity
-                {...props}
-                onPress={() => {
-                  const targetIndex = navigation
-                    .getState()
-                    .routes.findIndex(
-                      (route) => route.name === props.route.name
-                    );
-                  navigation.navigate(props.route.name);
-                }}
-              />
-            ),
           })}
         >
           <Tab.Screen
