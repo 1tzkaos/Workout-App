@@ -1,3 +1,10 @@
+import HomeScreen from "./screens/HomeScreen";
+import ExerciseDetailScreen from "./screens/ExerciseDetailScreen";
+import AddSetScreen from "./screens/AddSetScreen";
+import AnalyticsScreen from "./screens/AnalyticsScreen";
+import AddExerciseScreen from "./screens/AddExerciseScreen";
+import FoodScreen from "./screens/FoodScreen";
+
 // App.js
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
@@ -5,14 +12,13 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { View, Text } from "react-native";
-
-import HomeScreen from "./screens/HomeScreen";
-import ExerciseDetailScreen from "./screens/ExerciseDetailScreen";
-import AddSetScreen from "./screens/AddSetScreen";
-import AnalyticsScreen from "./screens/AnalyticsScreen";
-import AddExerciseScreen from "./screens/AddExerciseScreen";
-import FoodScreen from "./screens/FoodScreen";
+import {
+  View,
+  Text,
+  Animated,
+  PanResponder,
+  TouchableOpacity,
+} from "react-native";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -68,12 +74,60 @@ function WeightScreen() {
   );
 }
 
+function SwipeableNavigator({ children, navigation }) {
+  const pan = React.useRef(new Animated.Value(0)).current;
+
+  const panResponder = React.useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > 20;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        pan.setValue(gestureState.dx);
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        const currentIndex = navigation.getState().index;
+        const screenWidth = 200;
+
+        if (Math.abs(gestureState.dx) > screenWidth / 3) {
+          if (gestureState.dx > 0 && currentIndex > 0) {
+            navigation.navigate(
+              navigation.getState().routeNames[currentIndex - 1]
+            );
+          } else if (gestureState.dx < 0 && currentIndex < 2) {
+            navigation.navigate(
+              navigation.getState().routeNames[currentIndex + 1]
+            );
+          }
+        }
+
+        Animated.spring(pan, {
+          toValue: 0,
+          useNativeDriver: true,
+        }).start();
+      },
+    })
+  ).current;
+
+  return (
+    <Animated.View
+      {...panResponder.panHandlers}
+      style={{
+        flex: 1,
+        transform: [{ translateX: pan }],
+      }}
+    >
+      {children}
+    </Animated.View>
+  );
+}
+
 export default function App() {
   return (
     <SafeAreaProvider>
       <NavigationContainer>
         <Tab.Navigator
-          screenOptions={{
+          screenOptions={({ navigation }) => ({
             headerShown: false,
             tabBarStyle: {
               backgroundColor: "#1E1E1E",
@@ -87,13 +141,25 @@ export default function App() {
               fontSize: 13,
               fontWeight: "500",
             },
-          }}
+            tabBarButton: (props) => (
+              <TouchableOpacity
+                {...props}
+                onPress={() => {
+                  const targetIndex = navigation
+                    .getState()
+                    .routes.findIndex(
+                      (route) => route.name === props.route.name
+                    );
+                  navigation.navigate(props.route.name);
+                }}
+              />
+            ),
+          })}
         >
           <Tab.Screen
             name="Sets"
-            component={SetsStack}
             options={{
-              tabBarIcon: ({ color, size }) => (
+              tabBarIcon: ({ color }) => (
                 <MaterialCommunityIcons
                   name="dumbbell"
                   color={color}
@@ -101,12 +167,17 @@ export default function App() {
                 />
               ),
             }}
-          />
+          >
+            {(props) => (
+              <SwipeableNavigator {...props}>
+                <SetsStack {...props} />
+              </SwipeableNavigator>
+            )}
+          </Tab.Screen>
           <Tab.Screen
             name="Food"
-            component={FoodScreen}
             options={{
-              tabBarIcon: ({ color, size }) => (
+              tabBarIcon: ({ color }) => (
                 <MaterialCommunityIcons
                   name="food-apple"
                   color={color}
@@ -114,12 +185,17 @@ export default function App() {
                 />
               ),
             }}
-          />
+          >
+            {(props) => (
+              <SwipeableNavigator {...props}>
+                <FoodScreen {...props} />
+              </SwipeableNavigator>
+            )}
+          </Tab.Screen>
           <Tab.Screen
             name="Weight"
-            component={WeightScreen}
             options={{
-              tabBarIcon: ({ color, size }) => (
+              tabBarIcon: ({ color }) => (
                 <MaterialCommunityIcons
                   name="scale-bathroom"
                   color={color}
@@ -127,7 +203,13 @@ export default function App() {
                 />
               ),
             }}
-          />
+          >
+            {(props) => (
+              <SwipeableNavigator {...props}>
+                <WeightScreen {...props} />
+              </SwipeableNavigator>
+            )}
+          </Tab.Screen>
         </Tab.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
