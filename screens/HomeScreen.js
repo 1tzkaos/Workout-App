@@ -60,12 +60,7 @@ export default function HomeScreen({ navigation }) {
       const exercisesJson = await AsyncStorage.getItem("@exercises");
       if (!exercisesJson) {
         // If no exercises exist in storage, initialize with defaults
-        const defaultExercises = [
-          { id: "1", name: "Bench Press" },
-          { id: "2", name: "Squat" },
-          { id: "3", name: "Leg Press" },
-          { id: "4", name: "Hammer Curls" },
-        ];
+        const defaultExercises = [{ id: "1", name: "Bench Press" }];
         await AsyncStorage.setItem(
           "@exercises",
           JSON.stringify(defaultExercises)

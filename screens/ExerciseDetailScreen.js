@@ -236,14 +236,20 @@ export default function ExerciseDetailScreen({ route, navigation }) {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
-            style={styles.backButtonContainer}
+            style={styles.headerButton}
             onPress={() => navigation.goBack()}
           >
-            <ChevronIcon size={28} />
-            <Text style={styles.backButtonText}>Back</Text>
+            <View style={styles.backButtonContainer}>
+              <ChevronIcon size={28} />
+              <Text style={styles.backButtonText}>Back</Text>
+            </View>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{exercise.name}</Text>
-          <TouchableOpacity>
+
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            {exercise.name}
+          </Text>
+
+          <TouchableOpacity style={styles.headerButton}>
             <Text style={styles.moreButton}>•••</Text>
           </TouchableOpacity>
         </View>
@@ -324,10 +330,6 @@ ExerciseDetailScreen.propTypes = {
 // Update these styles in ExerciseDetailScreen.js
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#121212",
-  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -335,11 +337,12 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 8,
   },
+  headerButton: {
+    width: 80, // Fixed width for both buttons to ensure center alignment
+  },
   backButtonContainer: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 8,
-    paddingHorizontal: 4,
   },
   backButtonText: {
     color: "#3498db",
@@ -353,11 +356,16 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     flex: 1,
     textAlign: "center",
-    marginLeft: -28,
+    marginHorizontal: 8, // Add some spacing from the buttons
   },
   moreButton: {
     color: "#B3B3B3",
     fontSize: 20,
+    textAlign: "right",
+  },
+  container: {
+    flex: 1,
+    backgroundColor: "#121212",
   },
   lastUsed: {
     color: "#B3B3B3",
