@@ -18,6 +18,8 @@ import {
   Animated,
   PanResponder,
   TouchableOpacity,
+  useWindowDimensions,
+  StyleSheet,
 } from "react-native";
 
 const Stack = createNativeStackNavigator();
@@ -76,49 +78,107 @@ function WeightScreen() {
 
 function SwipeableNavigator({ children, navigation }) {
   const pan = React.useRef(new Animated.Value(0)).current;
+  const layout = useWindowDimensions();
+  const [screens, setScreens] = React.useState({
+    prev: null,
+    next: null,
+  });
 
-  const panResponder = React.useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 20;
-      },
-      onPanResponderMove: (_, gestureState) => {
-        pan.setValue(gestureState.dx);
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        const currentIndex = navigation.getState().index;
-        const screenWidth = 200;
+  React.useEffect(() => {
+    const state = navigation.getState();
+    const index = state.index;
 
-        if (Math.abs(gestureState.dx) > screenWidth / 3) {
-          if (gestureState.dx > 0 && currentIndex > 0) {
-            navigation.navigate(
-              navigation.getState().routeNames[currentIndex - 1]
-            );
-          } else if (gestureState.dx < 0 && currentIndex < 2) {
-            navigation.navigate(
-              navigation.getState().routeNames[currentIndex + 1]
-            );
-          }
+    setScreens({
+      prev: index > 0 ? state.routes[index - 1].name : null,
+      next:
+        index < state.routes.length - 1 ? state.routes[index + 1].name : null,
+    });
+  }, [navigation.getState().index]);
+
+  const renderScreen = (routeName) => {
+    const screenProps = { navigation };
+    switch (routeName) {
+      case "Sets":
+        return <SetsStack {...screenProps} />;
+      case "Food":
+        return <FoodScreen {...screenProps} />;
+      case "Weight":
+        return <WeightScreen {...screenProps} />;
+      default:
+        return null;
+    }
+  };
+
+  const translatePrev = pan.interpolate({
+    inputRange: [-layout.width, 0, layout.width],
+    outputRange: [-layout.width, -layout.width, 0],
+  });
+
+  const translateNext = pan.interpolate({
+    inputRange: [-layout.width, 0, layout.width],
+    outputRange: [0, layout.width, layout.width],
+  });
+
+  const panResponder = PanResponder.create({
+    onMoveShouldSetPanResponder: (_, gestureState) => {
+      return Math.abs(gestureState.dx) > 20;
+    },
+    onPanResponderMove: (_, gestureState) => {
+      pan.setValue(gestureState.dx);
+    },
+    onPanResponderRelease: (_, gestureState) => {
+      // Only navigate if the touch is released
+      if (Math.abs(gestureState.dx) > layout.width * 0.5) {
+        const navigateTo = gestureState.dx > 0 ? screens.prev : screens.next;
+        if (navigateTo) {
+          navigation.navigate(navigateTo);
         }
+      }
 
-        Animated.spring(pan, {
-          toValue: 0,
-          useNativeDriver: true,
-        }).start();
-      },
-    })
-  ).current;
+      // Always animate back to origin if released
+      Animated.spring(pan, {
+        toValue: 0,
+        useNativeDriver: true,
+        tension: 65,
+        friction: 11,
+      }).start();
+    },
+  });
 
   return (
-    <Animated.View
-      {...panResponder.panHandlers}
-      style={{
-        flex: 1,
-        transform: [{ translateX: pan }],
-      }}
-    >
-      {children}
-    </Animated.View>
+    <View style={{ flex: 1, backgroundColor: "#121212" }}>
+      {screens.prev && (
+        <Animated.View
+          style={{
+            ...StyleSheet.absoluteFillObject,
+            zIndex: -1,
+            transform: [{ translateX: translatePrev }],
+          }}
+        >
+          {renderScreen(screens.prev)}
+        </Animated.View>
+      )}
+      <Animated.View
+        {...panResponder.panHandlers}
+        style={{
+          flex: 1,
+          transform: [{ translateX: pan }],
+        }}
+      >
+        {children}
+      </Animated.View>
+      {screens.next && (
+        <Animated.View
+          style={{
+            ...StyleSheet.absoluteFillObject,
+            zIndex: -1,
+            transform: [{ translateX: translateNext }],
+          }}
+        >
+          {renderScreen(screens.next)}
+        </Animated.View>
+      )}
+    </View>
   );
 }
 
