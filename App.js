@@ -2,10 +2,10 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { View, Text } from "react-native";
+import { View, Text, useWindowDimensions } from "react-native";
 
 import HomeScreen from "./screens/HomeScreen";
 import ExerciseDetailScreen from "./screens/ExerciseDetailScreen";
@@ -15,7 +15,7 @@ import AddExerciseScreen from "./screens/AddExerciseScreen";
 import FoodScreen from "./screens/FoodScreen";
 
 const Stack = createNativeStackNavigator();
-const Tab = createBottomTabNavigator();
+const Tab = createMaterialTopTabNavigator();
 
 // Stack navigator for the Sets tab
 function SetsStack() {
@@ -68,66 +68,87 @@ function WeightScreen() {
   );
 }
 
+// Custom tab bar component
+function CustomTabBar({ state, descriptors, navigation, position }) {
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        backgroundColor: "#1E1E1E",
+        height: 85,
+        borderTopWidth: 1,
+        borderTopColor: "#2D2D2D",
+      }}
+    >
+      {state.routes.map((route, index) => {
+        const { options } = descriptors[route.key];
+        const isFocused = state.index === index;
+
+        let iconName;
+        switch (route.name) {
+          case "Sets":
+            iconName = "dumbbell";
+            break;
+          case "Food":
+            iconName = "food-apple";
+            break;
+          case "Weight":
+            iconName = "scale-bathroom";
+            break;
+          default:
+            iconName = "circle";
+        }
+
+        return (
+          <View
+            key={index}
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              padding: 10,
+            }}
+          >
+            <MaterialCommunityIcons
+              name={iconName}
+              size={24}
+              color={isFocused ? "#3498db" : "#B3B3B3"}
+            />
+            <Text
+              style={{
+                color: isFocused ? "#3498db" : "#B3B3B3",
+                fontSize: 13,
+                fontWeight: "500",
+                marginTop: 4,
+              }}
+            >
+              {route.name}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 export default function App() {
+  const layout = useWindowDimensions();
+
   return (
     <SafeAreaProvider>
       <NavigationContainer>
         <Tab.Navigator
+          tabBar={(props) => <CustomTabBar {...props} />}
           screenOptions={{
-            headerShown: false,
-            tabBarStyle: {
-              backgroundColor: "#1E1E1E",
-              borderTopColor: "#2D2D2D",
-              borderTopWidth: 1,
-              height: 85,
-            },
-            tabBarActiveTintColor: "#3498db",
-            tabBarInactiveTintColor: "#B3B3B3",
-            tabBarLabelStyle: {
-              fontSize: 13,
-              fontWeight: "500",
-            },
+            tabBarShowLabel: false,
+            swipeEnabled: true,
+            animationEnabled: true,
           }}
+          initialLayout={{ width: layout.width }}
         >
-          <Tab.Screen
-            name="Sets"
-            component={SetsStack}
-            options={{
-              tabBarIcon: ({ color, size }) => (
-                <MaterialCommunityIcons
-                  name="dumbbell"
-                  color={color}
-                  size={24}
-                />
-              ),
-            }}
-          />
-          <Tab.Screen
-            name="Food"
-            component={FoodScreen}
-            options={{
-              tabBarIcon: ({ color, size }) => (
-                <MaterialCommunityIcons
-                  name="food-apple"
-                  color={color}
-                  size={24}
-                />
-              ),
-            }}
-          />
-          <Tab.Screen
-            name="Weight"
-            component={WeightScreen}
-            options={{
-              tabBarIcon: ({ color, size }) => (
-                <MaterialCommunityIcons
-                  name="scale-bathroom"
-                  color={color}
-                  size={24}
-                />
-              ),
-            }}
-          />
+          <Tab.Screen name="Sets" component={SetsStack} />
+          <Tab.Screen name="Food" component={FoodScreen} />
+          <Tab.Screen name="Weight" component={WeightScreen} />
         </Tab.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
