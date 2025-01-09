@@ -1,4 +1,3 @@
-// screens/AddSetScreen.js
 import React, { useState } from "react";
 import {
   View,
@@ -6,6 +5,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   StatusBar,
+  ScrollView,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -42,7 +43,18 @@ export default function AddSetScreen({ route, navigation }) {
     }
   };
 
-  // Update the saveSet function in AddSetScreen.js
+  const checkForDuplicateSet = (sets, newSet) => {
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60000); // 5 minutes in milliseconds
+
+    return sets.some(
+      (set) =>
+        set.exercise === newSet.exercise &&
+        set.reps === newSet.reps &&
+        set.weight === newSet.weight &&
+        new Date(set.date) > fiveMinutesAgo // Only check sets from last 5 minutes
+    );
+  };
+
   const saveSet = async () => {
     try {
       // Save the new set
@@ -57,32 +69,56 @@ export default function AddSetScreen({ route, navigation }) {
         date: new Date().toISOString(),
       };
 
-      sets.push(newSet);
-      await AsyncStorage.setItem("@workout_sets", JSON.stringify(sets));
-
-      // Update the exercise's lastUsed timestamp
-      const exercisesJson = await AsyncStorage.getItem("@exercises");
-      if (exercisesJson) {
-        const exercises = JSON.parse(exercisesJson);
-        const updatedExercises = exercises.map((ex) => {
-          if (ex.name === exerciseName) {
-            return {
-              ...ex,
-              lastUsed: new Date().toISOString(),
-            };
-          }
-          return ex;
-        });
-        await AsyncStorage.setItem(
-          "@exercises",
-          JSON.stringify(updatedExercises)
+      // Check for duplicate sets
+      if (checkForDuplicateSet(sets, newSet)) {
+        Alert.alert(
+          "Duplicate Set",
+          "This exact set was already recorded in the last 5 minutes. Do you want to record it anyway?",
+          [
+            {
+              text: "Cancel",
+              style: "cancel",
+            },
+            {
+              text: "Record Anyway",
+              onPress: () => finalizeSave(sets, newSet),
+            },
+          ]
         );
+        return;
       }
 
-      navigation.goBack();
+      await finalizeSave(sets, newSet);
     } catch (error) {
       console.error("Error saving set:", error);
     }
+  };
+
+  const finalizeSave = async (sets, newSet) => {
+    // Add the new set
+    sets.push(newSet);
+    await AsyncStorage.setItem("@workout_sets", JSON.stringify(sets));
+
+    // Update the exercise's lastUsed timestamp
+    const exercisesJson = await AsyncStorage.getItem("@exercises");
+    if (exercisesJson) {
+      const exercises = JSON.parse(exercisesJson);
+      const updatedExercises = exercises.map((ex) => {
+        if (ex.name === exerciseName) {
+          return {
+            ...ex,
+            lastUsed: new Date().toISOString(),
+          };
+        }
+        return ex;
+      });
+      await AsyncStorage.setItem(
+        "@exercises",
+        JSON.stringify(updatedExercises)
+      );
+    }
+
+    navigation.goBack();
   };
 
   return (
@@ -100,71 +136,73 @@ export default function AddSetScreen({ route, navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Weight and Reps Input */}
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>WEIGHT</Text>
-
-        <TouchableOpacity
-          style={[
-            styles.valueContainer,
-            activeInput === "reps" && styles.valueContainerInactive,
-          ]}
-          onPress={() => setActiveInput("weight")}
-        >
-          <TouchableOpacity
-            onPress={() => incrementValue(-1)}
-            style={styles.incrementButton}
-          >
-            <Text style={styles.incrementButtonText}>-</Text>
-          </TouchableOpacity>
-
-          <View style={styles.valueDisplay}>
-            <Text style={styles.valueText}>{weight}</Text>
-            <Text style={styles.unitText}>lb</Text>
-          </View>
+      <ScrollView style={styles.scrollView} bounces={false}>
+        {/* Weight and Reps Input */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>WEIGHT</Text>
 
           <TouchableOpacity
-            onPress={() => incrementValue(1)}
-            style={styles.incrementButton}
+            style={[
+              styles.valueContainer,
+              activeInput === "reps" && styles.valueContainerInactive,
+            ]}
+            onPress={() => setActiveInput("weight")}
           >
-            <Text style={styles.incrementButtonText}>+</Text>
-          </TouchableOpacity>
-        </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => incrementValue(-1)}
+              style={styles.incrementButton}
+            >
+              <Text style={styles.incrementButtonText}>-</Text>
+            </TouchableOpacity>
 
-        {/* Reps Input */}
-        <Text style={styles.inputLabel}>REPS</Text>
-        <TouchableOpacity
-          style={[
-            styles.valueContainer,
-            activeInput === "weight" && styles.valueContainerInactive,
-          ]}
-          onPress={() => setActiveInput("reps")}
-        >
+            <View style={styles.valueDisplay}>
+              <Text style={styles.valueText}>{weight}</Text>
+              <Text style={styles.unitText}>lb</Text>
+            </View>
+
+            <TouchableOpacity
+              onPress={() => incrementValue(1)}
+              style={styles.incrementButton}
+            >
+              <Text style={styles.incrementButtonText}>+</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+
+          {/* Reps Input */}
+          <Text style={styles.inputLabel}>REPS</Text>
           <TouchableOpacity
-            onPress={() => incrementValue(-1)}
-            style={styles.incrementButton}
+            style={[
+              styles.valueContainer,
+              activeInput === "weight" && styles.valueContainerInactive,
+            ]}
+            onPress={() => setActiveInput("reps")}
           >
-            <Text style={styles.incrementButtonText}>-</Text>
+            <TouchableOpacity
+              onPress={() => incrementValue(-1)}
+              style={styles.incrementButton}
+            >
+              <Text style={styles.incrementButtonText}>-</Text>
+            </TouchableOpacity>
+
+            <View style={styles.valueDisplay}>
+              <Text style={styles.valueText}>{reps}</Text>
+              <Text style={styles.unitText}>rep</Text>
+            </View>
+
+            <TouchableOpacity
+              onPress={() => incrementValue(1)}
+              style={styles.incrementButton}
+            >
+              <Text style={styles.incrementButtonText}>+</Text>
+            </TouchableOpacity>
           </TouchableOpacity>
 
-          <View style={styles.valueDisplay}>
-            <Text style={styles.valueText}>{reps}</Text>
-            <Text style={styles.unitText}>rep</Text>
-          </View>
-
-          <TouchableOpacity
-            onPress={() => incrementValue(1)}
-            style={styles.incrementButton}
-          >
-            <Text style={styles.incrementButtonText}>+</Text>
+          {/* Record Button */}
+          <TouchableOpacity style={styles.recordButton} onPress={saveSet}>
+            <Text style={styles.recordButtonText}>Record Set</Text>
           </TouchableOpacity>
-        </TouchableOpacity>
-
-        {/* Record Button */}
-        <TouchableOpacity style={styles.recordButton} onPress={saveSet}>
-          <Text style={styles.recordButtonText}>Record Set</Text>
-        </TouchableOpacity>
-      </View>
+        </View>
+      </ScrollView>
 
       {/* Number Pad */}
       <View style={styles.numPad}>
@@ -196,12 +234,13 @@ AddSetScreen.propTypes = {
   }).isRequired,
 };
 
-// Update these styles in AddSetScreen.js
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#121212",
+  },
+  scrollView: {
+    flex: 1,
   },
   header: {
     flexDirection: "row",

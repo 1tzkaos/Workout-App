@@ -1,3 +1,4 @@
+// screens/HomeScreen.js
 import React, { useState } from "react";
 import {
   View,
@@ -5,14 +6,16 @@ import {
   TouchableOpacity,
   StyleSheet,
   StatusBar,
+  ScrollView,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
-import PropTypes from "prop-types";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import PropTypes from "prop-types";
+
 const formatLastUsed = (dateString) => {
-  if (!dateString) return "";
   const now = new Date();
   const date = new Date(dateString);
   const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
@@ -24,16 +27,28 @@ const formatLastUsed = (dateString) => {
   return `${Math.floor(diffDays / 30)}m ago`;
 };
 
+const clearAllData = async () => {
+  try {
+    await AsyncStorage.clear();
+    console.log("Storage successfully cleared!");
+  } catch (error) {
+    console.error("Error clearing AsyncStorage:", error);
+  }
+};
+
+const clearSpecificData = async (keys = ["@exercises", "@workout_sets"]) => {
+  try {
+    await AsyncStorage.multiRemove(keys);
+    console.log("Specific keys successfully cleared:", keys);
+  } catch (error) {
+    console.error("Error clearing specific keys:", error);
+  }
+};
+
 export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const [exercises, setExercises] = useState([
-    { id: "1", name: "Bench Press" },
-    { id: "2", name: "Squat" },
-    { id: "3", name: "Leg Press" },
-    { id: "4", name: "Hammer Curls" },
-  ]);
+  const [exercises, setExercises] = useState([]);
 
-  // Load exercises when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
       loadExercises();
@@ -44,33 +59,86 @@ export default function HomeScreen({ navigation }) {
     try {
       const exercisesJson = await AsyncStorage.getItem("@exercises");
       if (!exercisesJson) {
-        // If no exercises exist in storage, save the default ones
-        await AsyncStorage.setItem("@exercises", JSON.stringify(exercises));
+        // If no exercises exist in storage, initialize with defaults
+        const defaultExercises = [
+          { id: "1", name: "Bench Press" },
+          { id: "2", name: "Squat" },
+          { id: "3", name: "Leg Press" },
+          { id: "4", name: "Hammer Curls" },
+        ];
+        await AsyncStorage.setItem(
+          "@exercises",
+          JSON.stringify(defaultExercises)
+        );
+        setExercises(defaultExercises);
       } else {
-        setExercises(JSON.parse(exercisesJson));
+        let loadedExercises = JSON.parse(exercisesJson);
+
+        // Remove duplicates based on exercise name
+        const uniqueExercises = [];
+        const seenNames = new Set();
+
+        loadedExercises.forEach((exercise) => {
+          if (!seenNames.has(exercise.name.toLowerCase())) {
+            seenNames.add(exercise.name.toLowerCase());
+            uniqueExercises.push(exercise);
+          }
+        });
+
+        // If we removed any duplicates, update storage
+        if (uniqueExercises.length !== loadedExercises.length) {
+          await AsyncStorage.setItem(
+            "@exercises",
+            JSON.stringify(uniqueExercises)
+          );
+        }
+
+        // Sort exercises alphabetically
+        uniqueExercises.sort((a, b) => a.name.localeCompare(b.name));
+
+        setExercises(uniqueExercises);
       }
     } catch (error) {
       console.error("Error loading exercises:", error);
     }
   };
 
-  const renderExercise = (exercise) => (
-    <TouchableOpacity
-      key={exercise.id}
-      style={styles.exerciseItem}
-      onPress={() =>
-        navigation.navigate("ExerciseDetail", {
-          exercise: {
-            id: exercise.id,
-            name: exercise.name,
+  const handleLongPress = () => {
+    Alert.alert(
+      "Clear Data",
+      "What would you like to clear?",
+      [
+        {
+          text: "Clear All Data",
+          onPress: async () => {
+            await clearAllData();
+            loadExercises();
           },
-        })
-      }
-    >
-      <Text style={styles.exerciseName}>{exercise.name}</Text>
-      <Text style={styles.lastUsed}>{formatLastUsed(exercise.lastUsed)}</Text>
-    </TouchableOpacity>
-  );
+          style: "destructive",
+        },
+        {
+          text: "Clear Exercise Data",
+          onPress: async () => {
+            await clearSpecificData(["@exercises"]);
+            loadExercises();
+          },
+          style: "destructive",
+        },
+        {
+          text: "Clear Workout Sets",
+          onPress: async () => {
+            await clearSpecificData(["@workout_sets"]);
+          },
+          style: "destructive",
+        },
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -79,6 +147,13 @@ export default function HomeScreen({ navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Exercises</Text>
+        <TouchableOpacity onPress={handleLongPress}>
+          <MaterialCommunityIcons
+            name="dots-horizontal"
+            size={24}
+            color="#FFFFFF"
+          />
+        </TouchableOpacity>
       </View>
 
       {/* Quick Log Tip */}
@@ -89,17 +164,46 @@ export default function HomeScreen({ navigation }) {
         </Text>
       </View>
 
-      {/* Exercise List */}
-      <View style={styles.list}>
-        {exercises.map((exercise) => renderExercise(exercise))}
-      </View>
+      {/* Exercise List Container */}
+      <View style={styles.mainContainer}>
+        {/* Scrollable Exercise List */}
+        <ScrollView
+          style={styles.listContainer}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={true}
+          alwaysBounceVertical={false}
+        >
+          {exercises.map((exercise) => (
+            <TouchableOpacity
+              key={exercise.id}
+              style={styles.exerciseItem}
+              onPress={() =>
+                navigation.navigate("ExerciseDetail", {
+                  exercise: {
+                    id: exercise.id,
+                    name: exercise.name,
+                  },
+                })
+              }
+            >
+              <Text style={styles.exerciseName}>{exercise.name}</Text>
+              <Text style={styles.lastUsed}>
+                {exercise.lastUsed ? formatLastUsed(exercise.lastUsed) : ""}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
 
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => navigation.navigate("AddExercise")}
-      >
-        <Text style={styles.addButtonText}>+ Add Exercises</Text>
-      </TouchableOpacity>
+        {/* Add Button */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => navigation.navigate("AddExercise")}
+          >
+            <Text style={styles.addButtonText}>+ Add Exercises</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
 
       {/* Bottom Tab Bar */}
       <View style={styles.tabBar}>
@@ -140,8 +244,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#121212",
   },
   header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 16,
-    marginBottom: 8,
   },
   headerTitle: {
     fontSize: 28,
@@ -174,9 +280,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 22,
   },
-  list: {
+  mainContainer: {
     flex: 1,
-    paddingHorizontal: 16,
+    marginBottom: 0,
+  },
+  listContainer: {
+    flex: 1,
+  },
+  listContent: {
+    padding: 16,
+    paddingBottom: 16, // Add padding at the bottom
   },
   exerciseItem: {
     flexDirection: "row",
@@ -184,7 +297,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
     backgroundColor: "#1E1E1E",
-    marginVertical: 6,
+    marginBottom: 12,
     borderRadius: 16,
     shadowColor: "#000",
     shadowOffset: {
@@ -204,9 +317,12 @@ const styles = StyleSheet.create({
     color: "#3498db",
     fontSize: 15,
   },
+  buttonContainer: {
+    padding: 16,
+    backgroundColor: "#121212",
+  },
   addButton: {
     backgroundColor: "#1E1E1E",
-    margin: 16,
     padding: 18,
     borderRadius: 16,
     alignItems: "center",
@@ -238,14 +354,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 8,
   },
-  tabIcon: {
-    marginBottom: 4, // Adds space between icon and text
-  },
   tabText: {
     color: "#B3B3B3",
     fontSize: 14,
     fontWeight: "500",
-    marginTop: 4, // Adds space between icon and text
+    marginTop: 4,
   },
   tabTextActive: {
     color: "#3498db",

@@ -1,5 +1,5 @@
 // screens/AddExerciseScreen.js
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -34,8 +34,32 @@ export default function AddExerciseScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [searchText, setSearchText] = useState("");
   const [selectedExercises, setSelectedExercises] = useState(new Set());
+  const [existingExercises, setExistingExercises] = useState(new Set());
+
+  // Load existing exercises when screen mounts
+  useEffect(() => {
+    loadExistingExercises();
+  }, []);
+
+  const loadExistingExercises = async () => {
+    try {
+      const exercisesJson = await AsyncStorage.getItem("@exercises");
+      if (exercisesJson) {
+        const exercises = JSON.parse(exercisesJson);
+        const exerciseNames = new Set(exercises.map((ex) => ex.name));
+        setExistingExercises(exerciseNames);
+      }
+    } catch (error) {
+      console.error("Error loading existing exercises:", error);
+    }
+  };
 
   const toggleExercise = async (exercise) => {
+    if (existingExercises.has(exercise)) {
+      // Exercise already exists, don't allow selection
+      return;
+    }
+
     const newSelected = new Set(selectedExercises);
     if (newSelected.has(exercise)) {
       newSelected.delete(exercise);
@@ -68,6 +92,19 @@ export default function AddExerciseScreen({ navigation }) {
     exercise.toLowerCase().includes(searchText.toLowerCase())
   );
 
+  const getExerciseIcon = (exercise) => {
+    if (existingExercises.has(exercise)) {
+      return (
+        <MaterialCommunityIcons name="check-circle" size={24} color="#8E8E93" />
+      );
+    }
+    return selectedExercises.has(exercise) ? (
+      <MaterialCommunityIcons name="check" size={24} color="#00FF00" />
+    ) : (
+      <MaterialCommunityIcons name="plus" size={24} color="#00FF00" />
+    );
+  };
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="light-content" />
@@ -99,26 +136,32 @@ export default function AddExerciseScreen({ navigation }) {
           {filteredExercises.map((exercise) => (
             <TouchableOpacity
               key={exercise}
-              style={styles.exerciseItem}
+              style={[
+                styles.exerciseItem,
+                existingExercises.has(exercise) && styles.exerciseItemDisabled,
+              ]}
               onPress={() => toggleExercise(exercise)}
+              disabled={existingExercises.has(exercise)}
             >
               <View style={styles.exerciseLeftSection}>
-                {selectedExercises.has(exercise) ? (
-                  <MaterialCommunityIcons
-                    name="check"
-                    size={24}
-                    color="#00FF00"
-                  />
-                ) : (
-                  <MaterialCommunityIcons
-                    name="plus"
-                    size={24}
-                    color="#00FF00"
-                  />
-                )}
-                <Text style={styles.exerciseName}>{exercise}</Text>
+                {getExerciseIcon(exercise)}
+                <Text
+                  style={[
+                    styles.exerciseName,
+                    existingExercises.has(exercise) &&
+                      styles.exerciseNameDisabled,
+                  ]}
+                >
+                  {exercise}
+                </Text>
               </View>
-              <View style={styles.circleIndicator} />
+              <View
+                style={[
+                  styles.circleIndicator,
+                  existingExercises.has(exercise) &&
+                    styles.circleIndicatorDisabled,
+                ]}
+              />
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -181,6 +224,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5,
     borderBottomColor: "#38383A",
   },
+  exerciseItemDisabled: {
+    opacity: 0.5,
+  },
   exerciseLeftSection: {
     flexDirection: "row",
     alignItems: "center",
@@ -190,11 +236,17 @@ const styles = StyleSheet.create({
     fontSize: 17,
     marginLeft: 12,
   },
+  exerciseNameDisabled: {
+    color: "#8E8E93",
+  },
   circleIndicator: {
     width: 24,
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
     borderColor: "#38383A",
+  },
+  circleIndicatorDisabled: {
+    borderColor: "#8E8E93",
   },
 });

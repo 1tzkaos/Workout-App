@@ -345,7 +345,6 @@ const styles = StyleSheet.create({
     color: "#3498db",
     fontSize: 17,
     marginLeft: 4,
-    marginBottom: 5,
     fontWeight: "600",
   },
   headerTitle: {
