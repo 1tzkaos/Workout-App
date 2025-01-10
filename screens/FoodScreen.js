@@ -1,4 +1,3 @@
-// screens/FoodScreen.js
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -18,6 +17,100 @@ import { useFocusEffect } from "@react-navigation/native";
 
 const USDA_API_KEY = "W2PkO4sB6D2ly6GrdQyoxsDdnkiPT9lNIEyUfsaT";
 const USDA_API_ENDPOINT = "https://api.nal.usda.gov/fdc/v1";
+
+const MacroProgress = ({ label, current, goal, color }) => (
+  <View style={styles.macroProgressContainer}>
+    <View style={styles.macroLabelContainer}>
+      <Text style={styles.macroLabel}>{label}</Text>
+      <Text style={styles.macroValues}>
+        {current}/{goal}g
+      </Text>
+    </View>
+    <View style={styles.progressBarBackground}>
+      <View
+        style={[
+          styles.progressBarFill,
+          {
+            width: `${Math.min((current / goal) * 100, 100)}%`,
+            backgroundColor: color,
+          },
+        ]}
+      />
+    </View>
+  </View>
+);
+
+const MacroDistribution = ({ food, getNutrientValue }) => {
+  const protein = getNutrientValue(food, "Protein") * 4; // 4 calories per gram
+  const carbs = getNutrientValue(food, "Carbohydrate, by difference") * 4; // 4 calories per gram
+  const fat = getNutrientValue(food, "Total lipid (fat)") * 9; // 9 calories per gram
+  const totalCals = protein + carbs + fat;
+
+  const getPercentage = (macroCalories) => {
+    return totalCals > 0 ? (macroCalories / totalCals) * 100 : 0;
+  };
+
+  const proteinPercentage = getPercentage(protein);
+  const carbsPercentage = getPercentage(carbs);
+  const fatPercentage = getPercentage(fat);
+
+  return (
+    <View style={styles.macroDistributionContainer}>
+      <Text style={styles.distributionTitle}>Calorie Distribution</Text>
+
+      <View style={styles.distributionBar}>
+        <View
+          style={[
+            styles.distributionSegment,
+            {
+              backgroundColor: "#FF6B6B",
+              width: `${proteinPercentage}%`,
+            },
+          ]}
+        />
+        <View
+          style={[
+            styles.distributionSegment,
+            {
+              backgroundColor: "#4ECDC4",
+              width: `${carbsPercentage}%`,
+            },
+          ]}
+        />
+        <View
+          style={[
+            styles.distributionSegment,
+            {
+              backgroundColor: "#FFD93D",
+              width: `${fatPercentage}%`,
+            },
+          ]}
+        />
+      </View>
+
+      <View style={styles.distributionLegend}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendColor, { backgroundColor: "#FF6B6B" }]} />
+          <Text style={styles.legendText}>
+            Protein {Math.round(proteinPercentage)}%
+          </Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendColor, { backgroundColor: "#4ECDC4" }]} />
+          <Text style={styles.legendText}>
+            Carbs {Math.round(carbsPercentage)}%
+          </Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendColor, { backgroundColor: "#FFD93D" }]} />
+          <Text style={styles.legendText}>
+            Fat {Math.round(fatPercentage)}%
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+};
 
 export default function FoodScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -42,31 +135,11 @@ export default function FoodScreen({ navigation }) {
   const [selectedFood, setSelectedFood] = useState(null);
   const [showNutritionModal, setShowNutritionModal] = useState(false);
 
-  // Load saved data when screen focuses
   useFocusEffect(
     React.useCallback(() => {
       loadSavedData();
     }, [])
   );
-  const getNutrientValue = (food, nutrientName) => {
-    const nutrient = food.foodNutrients.find(
-      (n) => n.nutrientName === nutrientName
-    );
-    return nutrient ? Math.round(nutrient.value * 10) / 10 : 0;
-  };
-  const handleFoodSelect = (food) => {
-    setSelectedFood(food);
-    setShowNutritionModal(true);
-  };
-
-  const handleAddFood = async () => {
-    if (selectedFood) {
-      await addMeal(selectedFood);
-      setShowNutritionModal(false);
-      setSelectedFood(null);
-      setSearchResults([]);
-    }
-  };
 
   const loadSavedData = async () => {
     try {
@@ -100,6 +173,13 @@ export default function FoodScreen({ navigation }) {
     setTodaysMacros(totals);
   };
 
+  const getNutrientValue = (food, nutrientName) => {
+    const nutrient = food.foodNutrients.find(
+      (n) => n.nutrientName === nutrientName
+    );
+    return nutrient ? Math.round(nutrient.value * 10) / 10 : 0;
+  };
+
   const searchFood = async () => {
     if (!searchQuery.trim()) return;
 
@@ -126,30 +206,33 @@ export default function FoodScreen({ navigation }) {
     }
   };
 
-  const addMeal = async (food) => {
-    const newMeal = {
-      id: Date.now().toString(),
-      name: food.description,
-      calories:
-        food.foodNutrients.find((n) => n.nutrientName === "Energy")?.value || 0,
-      protein:
-        food.foodNutrients.find((n) => n.nutrientName === "Protein")?.value ||
-        0,
-      carbs:
-        food.foodNutrients.find(
-          (n) => n.nutrientName === "Carbohydrate, by difference"
-        )?.value || 0,
-      fat:
-        food.foodNutrients.find((n) => n.nutrientName === "Total lipid (fat)")
-          ?.value || 0,
-      servingSize: food.servingSize || 100,
-      timestamp: new Date().toISOString(),
-    };
+  const handleFoodSelect = (food) => {
+    setSelectedFood(food);
+    setShowNutritionModal(true);
+  };
 
-    const updatedMeals = [...meals, newMeal];
-    setMeals(updatedMeals);
-    calculateTodaysMacros(updatedMeals);
-    await AsyncStorage.setItem("@today_meals", JSON.stringify(updatedMeals));
+  const handleAddFood = async () => {
+    if (selectedFood) {
+      const newMeal = {
+        id: Date.now().toString(),
+        name: selectedFood.description,
+        calories: getNutrientValue(selectedFood, "Energy"),
+        protein: getNutrientValue(selectedFood, "Protein"),
+        carbs: getNutrientValue(selectedFood, "Carbohydrate, by difference"),
+        fat: getNutrientValue(selectedFood, "Total lipid (fat)"),
+        servingSize: selectedFood.servingSize || 100,
+        timestamp: new Date().toISOString(),
+      };
+
+      const updatedMeals = [...meals, newMeal];
+      setMeals(updatedMeals);
+      calculateTodaysMacros(updatedMeals);
+      await AsyncStorage.setItem("@today_meals", JSON.stringify(updatedMeals));
+
+      setShowNutritionModal(false);
+      setSelectedFood(null);
+      setSearchResults([]);
+    }
   };
 
   const saveGoals = async () => {
@@ -158,114 +241,6 @@ export default function FoodScreen({ navigation }) {
     setShowGoalsModal(false);
   };
 
-  const MacroProgress = ({ label, current, goal, color }) => (
-    <View style={styles.macroProgressContainer}>
-      <View style={styles.macroLabelContainer}>
-        <Text style={styles.macroLabel}>{label}</Text>
-        <Text style={styles.macroValues}>
-          {current}/{goal}g
-        </Text>
-      </View>
-      <View style={styles.progressBarBackground}>
-        <View
-          style={[
-            styles.progressBarFill,
-            {
-              width: `${Math.min((current / goal) * 100, 100)}%`,
-              backgroundColor: color,
-            },
-          ]}
-        />
-      </View>
-    </View>
-  );
-  const NutritionModal = () => (
-    <Modal
-      visible={showNutritionModal}
-      animationType="slide"
-      transparent={true}
-    >
-      <View style={styles.nutritionModalContainer}>
-        <View style={styles.nutritionModalContent}>
-          <View style={styles.nutritionModalHeader}>
-            <Text style={styles.nutritionModalTitle}>Nutrition Facts</Text>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setShowNutritionModal(false)}
-            >
-              <MaterialCommunityIcons name="close" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
-
-          {selectedFood && (
-            <>
-              <Text style={styles.foodTitle}>{selectedFood.description}</Text>
-              <Text style={styles.servingSize}>
-                Serving size: {selectedFood.servingSize || 100}g
-              </Text>
-
-              <View style={styles.nutritionDivider} />
-
-              <View style={styles.nutritionItem}>
-                <Text style={styles.nutritionLabel}>Calories</Text>
-                <Text style={styles.nutritionValue}>
-                  {getNutrientValue(selectedFood, "Energy")}
-                </Text>
-              </View>
-
-              <View style={styles.nutritionLargeDivider} />
-
-              <View style={styles.nutritionItem}>
-                <Text style={styles.nutritionLabel}>Total Fat</Text>
-                <Text style={styles.nutritionValue}>
-                  {getNutrientValue(selectedFood, "Total lipid (fat)")}g
-                </Text>
-              </View>
-
-              <View style={styles.nutritionItem}>
-                <Text style={styles.nutritionLabel}>Total Carbohydrates</Text>
-                <Text style={styles.nutritionValue}>
-                  {getNutrientValue(
-                    selectedFood,
-                    "Carbohydrate, by difference"
-                  )}
-                  g
-                </Text>
-              </View>
-
-              <View style={styles.nutritionSubItem}>
-                <Text style={styles.nutritionSubLabel}>Dietary Fiber</Text>
-                <Text style={styles.nutritionValue}>
-                  {getNutrientValue(selectedFood, "Fiber, total dietary")}g
-                </Text>
-              </View>
-
-              <View style={styles.nutritionSubItem}>
-                <Text style={styles.nutritionSubLabel}>Sugars</Text>
-                <Text style={styles.nutritionValue}>
-                  {getNutrientValue(selectedFood, "Sugars, total")}g
-                </Text>
-              </View>
-
-              <View style={styles.nutritionItem}>
-                <Text style={styles.nutritionLabel}>Protein</Text>
-                <Text style={styles.nutritionValue}>
-                  {getNutrientValue(selectedFood, "Protein")}g
-                </Text>
-              </View>
-
-              <TouchableOpacity
-                style={styles.addFoodButton}
-                onPress={handleAddFood}
-              >
-                <Text style={styles.addFoodButtonText}>Add Food</Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
-      </View>
-    </Modal>
-  );
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="light-content" />
@@ -288,7 +263,6 @@ export default function FoodScreen({ navigation }) {
           <Text style={styles.goalCalories}> / {dailyGoals.calories}</Text>
         </Text>
 
-        {/* Macro Progress Bars */}
         <MacroProgress
           label="Protein"
           current={todaysMacros.protein}
@@ -503,6 +477,12 @@ export default function FoodScreen({ navigation }) {
                   </Text>
                 </View>
 
+                {/* Macro Distribution */}
+                <MacroDistribution
+                  food={selectedFood}
+                  getNutrientValue={getNutrientValue}
+                />
+
                 <View style={styles.nutritionLargeDivider} />
 
                 <View style={styles.nutritionItem}>
@@ -558,120 +538,7 @@ export default function FoodScreen({ navigation }) {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
-  nutritionModalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  nutritionModalContent: {
-    backgroundColor: "#1E1E1E",
-    borderRadius: 16,
-    padding: 20,
-    width: "90%",
-    maxWidth: 400,
-  },
-  nutritionModalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  nutritionModalTitle: {
-    color: "#FFFFFF",
-    fontSize: 24,
-    fontWeight: "bold",
-  },
-  closeButton: {
-    padding: 4,
-  },
-  foodTitle: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 8,
-  },
-  servingSize: {
-    color: "#8E8E93",
-    fontSize: 16,
-    marginBottom: 16,
-  },
-  nutritionDivider: {
-    height: 1,
-    backgroundColor: "#2D2D2D",
-    marginVertical: 8,
-  },
-  nutritionLargeDivider: {
-    height: 8,
-    backgroundColor: "#2D2D2D",
-    marginVertical: 12,
-  },
-  nutritionItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginVertical: 8,
-  },
-  nutritionSubItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginVertical: 8,
-    paddingLeft: 20,
-  },
-  nutritionLabel: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  nutritionSubLabel: {
-    color: "#B3B3B3",
-    fontSize: 16,
-  },
-  nutritionValue: {
-    color: "#FFFFFF",
-    fontSize: 16,
-  },
-  addFoodButton: {
-    backgroundColor: "#3498db",
-    padding: 16,
-    borderRadius: 8,
-    marginTop: 20,
-  },
-  addFoodButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  searchResultsHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  searchResultsTitle: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  closeSearchButton: {
-    padding: 4,
-  },
-  macroRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 4,
-  },
-  macroText: {
-    color: "#8E8E93",
-    fontSize: 14,
-  },
-  macroDot: {
-    color: "#8E8E93",
-    fontSize: 14,
-    marginHorizontal: 4,
-  },
   container: {
     flex: 1,
     backgroundColor: "#121212",
@@ -848,6 +715,20 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     padding: 20,
   },
+  searchResultsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  searchResultsTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  closeSearchButton: {
+    padding: 4,
+  },
   searchResultItem: {
     paddingVertical: 12,
     borderBottomWidth: 1,
@@ -858,13 +739,151 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 4,
   },
-  foodDetails: {
+  macroRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    marginTop: 4,
+  },
+  macroText: {
     color: "#8E8E93",
     fontSize: 14,
+  },
+  macroDot: {
+    color: "#8E8E93",
+    fontSize: 14,
+    marginHorizontal: 4,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+
+  // Nutrition Modal Styles
+  nutritionModalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  nutritionModalContent: {
+    backgroundColor: "#1E1E1E",
+    borderRadius: 16,
+    padding: 20,
+    width: "90%",
+    maxWidth: 400,
+    maxHeight: "80%",
+  },
+  nutritionModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  nutritionModalTitle: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  closeButton: {
+    padding: 4,
+  },
+  foodTitle: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  servingSize: {
+    color: "#8E8E93",
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  nutritionDivider: {
+    height: 1,
+    backgroundColor: "#2D2D2D",
+    marginVertical: 8,
+  },
+  nutritionLargeDivider: {
+    height: 8,
+    backgroundColor: "#2D2D2D",
+    marginVertical: 12,
+  },
+  nutritionItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginVertical: 8,
+  },
+  nutritionSubItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginVertical: 8,
+    paddingLeft: 20,
+  },
+  nutritionLabel: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  nutritionSubLabel: {
+    color: "#B3B3B3",
+    fontSize: 16,
+  },
+  nutritionValue: {
+    color: "#FFFFFF",
+    fontSize: 16,
+  },
+  addFoodButton: {
+    backgroundColor: "#3498db",
+    padding: 16,
+    borderRadius: 8,
+    marginTop: 20,
+  },
+  addFoodButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+
+  // Macro Distribution Styles
+  macroDistributionContainer: {
+    marginVertical: 16,
+  },
+  distributionTitle: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  distributionBar: {
+    height: 24,
+    flexDirection: "row",
+    borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: "#2D2D2D",
+  },
+  distributionSegment: {
+    height: "100%",
+  },
+  distributionLegend: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  legendColor: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 4,
+  },
+  legendText: {
+    color: "#B3B3B3",
+    fontSize: 14,
   },
 });
