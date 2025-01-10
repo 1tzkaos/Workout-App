@@ -21,14 +21,6 @@ export default function FoodScreen({ navigation }) {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButtonContainer}
-          onPress={() => navigation.navigate("Home")}
-        >
-          <ChevronIcon size={28} color="#3498db" />
-          <Text style={styles.backButtonText}>Back</Text>
-        </TouchableOpacity>
-
         <Text style={styles.headerTitle}>Food Log</Text>
 
         <TouchableOpacity style={styles.moreButton}>
