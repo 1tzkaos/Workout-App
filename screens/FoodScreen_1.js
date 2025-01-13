@@ -10,7 +10,6 @@ import {
   Modal,
   ActivityIndicator,
   Animated,
-  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -45,6 +44,7 @@ const MacroProgress = ({ label, current, goal, color }) => (
     </View>
   </View>
 );
+
 const MacroDistribution = ({ food, getNutrientValue }) => {
   const protein = getNutrientValue(food, "Protein") * 4;
   const carbs = getNutrientValue(food, "Carbohydrate, by difference") * 4;
@@ -116,6 +116,7 @@ const MacroDistribution = ({ food, getNutrientValue }) => {
     </View>
   );
 };
+
 const MealItem = ({ meal, onDelete }) => {
   let row = [];
   let prevOpenedRow;
@@ -188,6 +189,7 @@ const MealItem = ({ meal, onDelete }) => {
     </Swipeable>
   );
 };
+
 export default function FoodScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [dailyGoals, setDailyGoals] = useState({
@@ -216,7 +218,59 @@ export default function FoodScreen({ navigation }) {
       loadSavedData();
     }, [])
   );
+  const deleteMeal = async (mealId) => {
+    try {
+      const updatedMeals = meals.filter((meal) => meal.id !== mealId);
+      setMeals(updatedMeals);
+      calculateTodaysMacros(updatedMeals);
+      await AsyncStorage.setItem("@today_meals", JSON.stringify(updatedMeals));
+    } catch (error) {
+      console.error("Error deleting meal:", error);
+    }
+  };
+  const renderRightActions = (progress, dragX, mealId) => {
+    const scale = dragX.interpolate({
+      inputRange: [-100, 0],
+      outputRange: [1, 0],
+      extrapolate: "clamp",
+    });
 
+    const opacity = progress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 1],
+    });
+
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <View style={[styles.container, { paddingTop: insets.top }]}>
+          <Animated.View
+            style={[
+              styles.deleteContainer,
+              {
+                opacity: opacity,
+              },
+            ]}
+          >
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => deleteMeal(mealId)}
+            >
+              <Animated.Text
+                style={[
+                  styles.deleteButtonText,
+                  {
+                    transform: [{ scale }],
+                  },
+                ]}
+              >
+                Delete
+              </Animated.Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </GestureHandlerRootView>
+    );
+  };
   const loadSavedData = async () => {
     try {
       const savedGoals = await AsyncStorage.getItem("@daily_goals");
@@ -245,6 +299,7 @@ export default function FoodScreen({ navigation }) {
       }),
       { calories: 0, protein: 0, carbs: 0, fat: 0 }
     );
+
     setTodaysMacros(totals);
   };
 
@@ -255,12 +310,8 @@ export default function FoodScreen({ navigation }) {
     return nutrient ? Math.round(nutrient.value * 10) / 10 : 0;
   };
 
-  // Modify the searchFood function:
   const searchFood = async () => {
-    if (!searchQuery.trim()) {
-      Alert.alert("Error", "Please enter a search term");
-      return;
-    }
+    if (!searchQuery.trim()) return;
 
     setIsSearching(true);
     try {
@@ -276,26 +327,10 @@ export default function FoodScreen({ navigation }) {
         }
       );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
       const data = await response.json();
-      console.log("Search Results:", data); // Add this to debug
-
-      if (!data.foods || data.foods.length === 0) {
-        Alert.alert("No Results", "No foods found matching your search.");
-        setSearchResults([]);
-        return;
-      }
-
-      setSearchResults(data.foods);
+      setSearchResults(data.foods || []);
     } catch (error) {
       console.error("Error searching USDA database:", error);
-      Alert.alert(
-        "Error",
-        "There was a problem searching for foods. Please try again."
-      );
     } finally {
       setIsSearching(false);
     }
@@ -330,17 +365,6 @@ export default function FoodScreen({ navigation }) {
     }
   };
 
-  const deleteMeal = async (mealId) => {
-    try {
-      const updatedMeals = meals.filter((meal) => meal.id !== mealId);
-      setMeals(updatedMeals);
-      calculateTodaysMacros(updatedMeals);
-      await AsyncStorage.setItem("@today_meals", JSON.stringify(updatedMeals));
-    } catch (error) {
-      console.error("Error deleting meal:", error);
-    }
-  };
-
   const saveGoals = async () => {
     setDailyGoals(tempGoals);
     await AsyncStorage.setItem("@daily_goals", JSON.stringify(tempGoals));
@@ -348,167 +372,227 @@ export default function FoodScreen({ navigation }) {
   };
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <StatusBar barStyle="light-content" />
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <StatusBar barStyle="light-content" />
 
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Food Log</Text>
-          <TouchableOpacity onPress={() => setShowGoalsModal(true)}>
-            <MaterialCommunityIcons name="cog" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Food Log</Text>
+        <TouchableOpacity onPress={() => setShowGoalsModal(true)}>
+          <MaterialCommunityIcons name="cog" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
 
-        {/* Daily Progress */}
-        <View style={styles.calorieCard}>
-          <Text style={styles.calorieTitle}>Calories Remaining</Text>
-          <Text style={styles.calorieNumbers}>
-            <Text style={styles.remainingCalories}>
-              {dailyGoals.calories - todaysMacros.calories}
-            </Text>
-            <Text style={styles.goalCalories}> / {dailyGoals.calories}</Text>
+      {/* Daily Progress */}
+      <View style={styles.calorieCard}>
+        <Text style={styles.calorieTitle}>Calories Remaining</Text>
+        <Text style={styles.calorieNumbers}>
+          <Text style={styles.remainingCalories}>
+            {dailyGoals.calories - todaysMacros.calories}
           </Text>
+          <Text style={styles.goalCalories}> / {dailyGoals.calories}</Text>
+        </Text>
 
-          <MacroProgress
-            label="Protein"
-            current={todaysMacros.protein}
-            goal={dailyGoals.protein}
-            color="#FF6B6B"
-          />
-          <MacroProgress
-            label="Carbs"
-            current={todaysMacros.carbs}
-            goal={dailyGoals.carbs}
-            color="#4ECDC4"
-          />
-          <MacroProgress
-            label="Fat"
-            current={todaysMacros.fat}
-            goal={dailyGoals.fat}
-            color="#FFD93D"
-          />
-        </View>
+        <MacroProgress
+          label="Protein"
+          current={todaysMacros.protein}
+          goal={dailyGoals.protein}
+          color="#FF6B6B"
+        />
+        <MacroProgress
+          label="Carbs"
+          current={todaysMacros.carbs}
+          goal={dailyGoals.carbs}
+          color="#4ECDC4"
+        />
+        <MacroProgress
+          label="Fat"
+          current={todaysMacros.fat}
+          goal={dailyGoals.fat}
+          color="#FFD93D"
+        />
+      </View>
 
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <MaterialCommunityIcons name="magnify" size={20} color="#8E8E93" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder={isSearching ? "Searching..." : "Search foods..."}
-            placeholderTextColor="#8E8E93"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onSubmitEditing={searchFood}
-            editable={!isSearching}
-          />
-          {isSearching && (
-            <ActivityIndicator
-              size="small"
-              color="#3498db"
-              style={{ marginLeft: 8 }}
-            />
-          )}
-        </View>
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <MaterialCommunityIcons name="magnify" size={20} color="#8E8E93" />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search foods..."
+          placeholderTextColor="#8E8E93"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onSubmitEditing={searchFood}
+        />
+      </View>
 
-        {/* Food List */}
-        <ScrollView style={styles.mealsList}>
-          {meals.map((meal) => (
-            <MealItem key={meal.id} meal={meal} onDelete={deleteMeal} />
-          ))}
-        </ScrollView>
+      {/* Food List */}
+      <ScrollView style={styles.mealsList}>
+        {meals.map((meal) => (
+          <Swipeable
+            key={meal.id}
+            renderRightActions={(progress, dragX) =>
+              renderRightActions(progress, dragX, meal.id)
+            }
+            overshootRight={false}
+            rightThreshold={40}
+            friction={2}
+            useNativeAnimations
+          >
+            <View style={styles.mealItem}>
+              <Text style={styles.mealName}>{meal.name}</Text>
+              <Text style={styles.mealMacros}>
+                {meal.calories} cal • {meal.protein}p • {meal.carbs}c •{" "}
+                {meal.fat}f
+              </Text>
+            </View>
+          </Swipeable>
+        ))}
+      </ScrollView>
 
-        {/* Goals Modal */}
-        <Modal
-          visible={showGoalsModal}
-          animationType="slide"
-          transparent={true}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Set Daily Goals</Text>
+      {/* Goals Modal */}
+      <Modal visible={showGoalsModal} animationType="slide" transparent={true}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Set Daily Goals</Text>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Daily Calories</Text>
-                <TextInput
-                  style={styles.input}
-                  keyboardType="numeric"
-                  value={tempGoals.calories.toString()}
-                  onChangeText={(val) =>
-                    setTempGoals({ ...tempGoals, calories: parseInt(val) || 0 })
-                  }
-                />
-              </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Daily Calories</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={tempGoals.calories.toString()}
+                onChangeText={(val) =>
+                  setTempGoals({ ...tempGoals, calories: parseInt(val) || 0 })
+                }
+              />
+            </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Protein (g)</Text>
-                <TextInput
-                  style={styles.input}
-                  keyboardType="numeric"
-                  value={tempGoals.protein.toString()}
-                  onChangeText={(val) =>
-                    setTempGoals({ ...tempGoals, protein: parseInt(val) || 0 })
-                  }
-                />
-              </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Protein (g)</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={tempGoals.protein.toString()}
+                onChangeText={(val) =>
+                  setTempGoals({ ...tempGoals, protein: parseInt(val) || 0 })
+                }
+              />
+            </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Carbs (g)</Text>
-                <TextInput
-                  style={styles.input}
-                  keyboardType="numeric"
-                  value={tempGoals.carbs.toString()}
-                  onChangeText={(val) =>
-                    setTempGoals({ ...tempGoals, carbs: parseInt(val) || 0 })
-                  }
-                />
-              </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Carbs (g)</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={tempGoals.carbs.toString()}
+                onChangeText={(val) =>
+                  setTempGoals({ ...tempGoals, carbs: parseInt(val) || 0 })
+                }
+              />
+            </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Fat (g)</Text>
-                <TextInput
-                  style={styles.input}
-                  keyboardType="numeric"
-                  value={tempGoals.fat.toString()}
-                  onChangeText={(val) =>
-                    setTempGoals({ ...tempGoals, fat: parseInt(val) || 0 })
-                  }
-                />
-              </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Fat (g)</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={tempGoals.fat.toString()}
+                onChangeText={(val) =>
+                  setTempGoals({ ...tempGoals, fat: parseInt(val) || 0 })
+                }
+              />
+            </View>
 
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.cancelButton]}
-                  onPress={() => setShowGoalsModal(false)}
-                >
-                  <Text style={styles.buttonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.saveButton]}
-                  onPress={saveGoals}
-                >
-                  <Text style={styles.buttonText}>Save</Text>
-                </TouchableOpacity>
-              </View>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setShowGoalsModal(false)}
+              >
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.saveButton]}
+                onPress={saveGoals}
+              >
+                <Text style={styles.buttonText}>Save</Text>
+              </TouchableOpacity>
             </View>
           </View>
-        </Modal>
+        </View>
+      </Modal>
 
-        {/* Search Results Modal */}
-        <Modal
-          visible={isSearching || searchResults.length > 0}
-          animationType="slide"
-          transparent={true}
-        >
-          <View style={styles.searchResultsContainer}>
-            <View style={styles.searchResultsHeader}>
-              <Text style={styles.searchResultsTitle}>Search Results</Text>
+      {/* Search Results Modal */}
+      <Modal
+        visible={isSearching || searchResults.length > 0}
+        animationType="slide"
+        transparent={true}
+      >
+        <View style={styles.searchResultsContainer}>
+          <View style={styles.searchResultsHeader}>
+            <Text style={styles.searchResultsTitle}>Search Results</Text>
+            <TouchableOpacity
+              onPress={() => {
+                setSearchResults([]);
+                setSearchQuery("");
+              }}
+              style={styles.closeSearchButton}
+            >
+              <MaterialCommunityIcons name="close" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+
+          {isSearching ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#3498db" />
+            </View>
+          ) : (
+            <ScrollView>
+              {searchResults.map((food) => (
+                <TouchableOpacity
+                  key={food.fdcId}
+                  style={styles.searchResultItem}
+                  onPress={() => handleFoodSelect(food)}
+                >
+                  <Text style={styles.foodName}>{food.description}</Text>
+                  <View style={styles.macroRow}>
+                    <Text style={styles.macroText}>
+                      {getNutrientValue(food, "Energy")} cal
+                    </Text>
+                    <Text style={styles.macroDot}>•</Text>
+                    <Text style={styles.macroText}>
+                      P: {getNutrientValue(food, "Protein")}g
+                    </Text>
+                    <Text style={styles.macroDot}>•</Text>
+                    <Text style={styles.macroText}>
+                      C: {getNutrientValue(food, "Carbohydrate, by difference")}
+                      g
+                    </Text>
+                    <Text style={styles.macroDot}>•</Text>
+                    <Text style={styles.macroText}>
+                      F: {getNutrientValue(food, "Total lipid (fat)")}g
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+      </Modal>
+
+      {/* Nutrition Details Modal */}
+      <Modal
+        visible={showNutritionModal}
+        animationType="slide"
+        transparent={true}
+      >
+        <View style={styles.nutritionModalContainer}>
+          <View style={styles.nutritionModalContent}>
+            <View style={styles.nutritionModalHeader}>
+              <Text style={styles.nutritionModalTitle}>Nutrition Facts</Text>
               <TouchableOpacity
-                onPress={() => {
-                  setSearchResults([]);
-                  setSearchQuery("");
-                }}
-                style={styles.closeSearchButton}
+                style={styles.closeButton}
+                onPress={() => setShowNutritionModal(false)}
               >
                 <MaterialCommunityIcons
                   name="close"
@@ -518,145 +602,81 @@ export default function FoodScreen({ navigation }) {
               </TouchableOpacity>
             </View>
 
-            {isSearching ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#3498db" />
-              </View>
-            ) : (
-              <ScrollView>
-                {searchResults.map((food) => (
-                  <TouchableOpacity
-                    key={food.fdcId}
-                    style={styles.searchResultItem}
-                    onPress={() => handleFoodSelect(food)}
-                  >
-                    <Text style={styles.foodName}>{food.description}</Text>
-                    <View style={styles.macroRow}>
-                      <Text style={styles.macroText}>
-                        {getNutrientValue(food, "Energy")} cal
-                      </Text>
-                      <Text style={styles.macroDot}>•</Text>
-                      <Text style={styles.macroText}>
-                        P: {getNutrientValue(food, "Protein")}g
-                      </Text>
-                      <Text style={styles.macroDot}>•</Text>
-                      <Text style={styles.macroText}>
-                        C:{" "}
-                        {getNutrientValue(food, "Carbohydrate, by difference")}g
-                      </Text>
-                      <Text style={styles.macroDot}>•</Text>
-                      <Text style={styles.macroText}>
-                        F: {getNutrientValue(food, "Total lipid (fat)")}g
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+            {selectedFood && (
+              <>
+                <Text style={styles.foodTitle}>{selectedFood.description}</Text>
+                <Text style={styles.servingSize}>
+                  Serving size: {selectedFood.servingSize || 100}g
+                </Text>
+
+                <View style={styles.nutritionDivider} />
+
+                <View style={styles.nutritionItem}>
+                  <Text style={styles.nutritionLabel}>Calories</Text>
+                  <Text style={styles.nutritionValue}>
+                    {getNutrientValue(selectedFood, "Energy")}
+                  </Text>
+                </View>
+
+                {/* Macro Distribution */}
+                <MacroDistribution
+                  food={selectedFood}
+                  getNutrientValue={getNutrientValue}
+                />
+
+                <View style={styles.nutritionLargeDivider} />
+
+                <View style={styles.nutritionItem}>
+                  <Text style={styles.nutritionLabel}>Total Fat</Text>
+                  <Text style={styles.nutritionValue}>
+                    {getNutrientValue(selectedFood, "Total lipid (fat)")}g
+                  </Text>
+                </View>
+
+                <View style={styles.nutritionItem}>
+                  <Text style={styles.nutritionLabel}>Total Carbohydrates</Text>
+                  <Text style={styles.nutritionValue}>
+                    {getNutrientValue(
+                      selectedFood,
+                      "Carbohydrate, by difference"
+                    )}
+                    g
+                  </Text>
+                </View>
+
+                <View style={styles.nutritionSubItem}>
+                  <Text style={styles.nutritionSubLabel}>Dietary Fiber</Text>
+                  <Text style={styles.nutritionValue}>
+                    {getNutrientValue(selectedFood, "Fiber, total dietary")}g
+                  </Text>
+                </View>
+
+                <View style={styles.nutritionSubItem}>
+                  <Text style={styles.nutritionSubLabel}>Sugars</Text>
+                  <Text style={styles.nutritionValue}>
+                    {getNutrientValue(selectedFood, "Sugars, total")}g
+                  </Text>
+                </View>
+
+                <View style={styles.nutritionItem}>
+                  <Text style={styles.nutritionLabel}>Protein</Text>
+                  <Text style={styles.nutritionValue}>
+                    {getNutrientValue(selectedFood, "Protein")}g
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.addFoodButton}
+                  onPress={handleAddFood}
+                >
+                  <Text style={styles.addFoodButtonText}>Add Food</Text>
+                </TouchableOpacity>
+              </>
             )}
           </View>
-        </Modal>
-
-        {/* Nutrition Details Modal */}
-        <Modal
-          visible={showNutritionModal}
-          animationType="slide"
-          transparent={true}
-        >
-          <View style={styles.nutritionModalContainer}>
-            <View style={styles.nutritionModalContent}>
-              <View style={styles.nutritionModalHeader}>
-                <Text style={styles.nutritionModalTitle}>Nutrition Facts</Text>
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={() => setShowNutritionModal(false)}
-                >
-                  <MaterialCommunityIcons
-                    name="close"
-                    size={24}
-                    color="#FFFFFF"
-                  />
-                </TouchableOpacity>
-              </View>
-
-              {selectedFood && (
-                <>
-                  <Text style={styles.foodTitle}>
-                    {selectedFood.description}
-                  </Text>
-                  <Text style={styles.servingSize}>
-                    Serving size: {selectedFood.servingSize || 100}g
-                  </Text>
-
-                  <View style={styles.nutritionDivider} />
-
-                  <View style={styles.nutritionItem}>
-                    <Text style={styles.nutritionLabel}>Calories</Text>
-                    <Text style={styles.nutritionValue}>
-                      {getNutrientValue(selectedFood, "Energy")}
-                    </Text>
-                  </View>
-
-                  <MacroDistribution
-                    food={selectedFood}
-                    getNutrientValue={getNutrientValue}
-                  />
-
-                  <View style={styles.nutritionLargeDivider} />
-
-                  <View style={styles.nutritionItem}>
-                    <Text style={styles.nutritionLabel}>Total Fat</Text>
-                    <Text style={styles.nutritionValue}>
-                      {getNutrientValue(selectedFood, "Total lipid (fat)")}g
-                    </Text>
-                  </View>
-
-                  <View style={styles.nutritionItem}>
-                    <Text style={styles.nutritionLabel}>
-                      Total Carbohydrates
-                    </Text>
-                    <Text style={styles.nutritionValue}>
-                      {getNutrientValue(
-                        selectedFood,
-                        "Carbohydrate, by difference"
-                      )}
-                      g
-                    </Text>
-                  </View>
-
-                  <View style={styles.nutritionSubItem}>
-                    <Text style={styles.nutritionSubLabel}>Dietary Fiber</Text>
-                    <Text style={styles.nutritionValue}>
-                      {getNutrientValue(selectedFood, "Fiber, total dietary")}g
-                    </Text>
-                  </View>
-
-                  <View style={styles.nutritionSubItem}>
-                    <Text style={styles.nutritionSubLabel}>Sugars</Text>
-                    <Text style={styles.nutritionValue}>
-                      {getNutrientValue(selectedFood, "Sugars, total")}g
-                    </Text>
-                  </View>
-
-                  <View style={styles.nutritionItem}>
-                    <Text style={styles.nutritionLabel}>Protein</Text>
-                    <Text style={styles.nutritionValue}>
-                      {getNutrientValue(selectedFood, "Protein")}g
-                    </Text>
-                  </View>
-
-                  <TouchableOpacity
-                    style={styles.addFoodButton}
-                    onPress={handleAddFood}
-                  >
-                    <Text style={styles.addFoodButtonText}>Add Food</Text>
-                  </TouchableOpacity>
-                </>
-              )}
-            </View>
-          </View>
-        </Modal>
-      </View>
-    </GestureHandlerRootView>
+        </View>
+      </Modal>
+    </View>
   );
 }
 const styles = StyleSheet.create({
@@ -880,6 +900,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
   // Nutrition Modal Styles
   nutritionModalContainer: {
     flex: 1,
@@ -966,6 +987,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textAlign: "center",
   },
+
   // Macro Distribution Styles
   macroDistributionContainer: {
     marginVertical: 16,
@@ -1004,23 +1026,5 @@ const styles = StyleSheet.create({
   legendText: {
     color: "#B3B3B3",
     fontSize: 14,
-  },
-  // Swipe to Delete Styles
-  deleteContainer: {
-    marginBottom: 12,
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  deleteButton: {
-    backgroundColor: "#e74c3c",
-    justifyContent: "center",
-    alignItems: "center",
-    width: 90,
-    height: "100%",
-  },
-  deleteButtonText: {
-    color: "white",
-    fontSize: 17,
-    fontWeight: "600",
   },
 });
