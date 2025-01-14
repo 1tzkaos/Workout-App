@@ -2,6 +2,49 @@
 import { StyleSheet } from "react-native";
 
 export default StyleSheet.create({
+  // Add these to your styles.js file
+  servingSizeContainer: {
+    marginVertical: 16,
+  },
+  servingSizeLabel: {
+    color: "#8E8E93",
+    fontSize: 16,
+    marginBottom: 12,
+  },
+  servingsControl: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#2C2C2E",
+    borderRadius: 12,
+    padding: 8,
+  },
+  servingButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#3498db",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  servingButtonText: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "600",
+  },
+  servingsDisplay: {
+    alignItems: "center",
+  },
+  servingsValue: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "600",
+  },
+  servingsLabel: {
+    color: "#8E8E93",
+    fontSize: 14,
+    marginTop: 4,
+  },
   container: {
     flex: 1,
     backgroundColor: "#121212",

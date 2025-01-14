@@ -1,10 +1,9 @@
 // src/screens/FoodScreen/hooks/useFoodData.js
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { Alert } from "react-native";
 import { getNutrientValue } from "../utils/nutrition";
-import { Platform } from "react-native";
 
 export const useFoodData = () => {
   const [dailyGoals, setDailyGoals] = useState({
@@ -29,22 +28,8 @@ export const useFoodData = () => {
     }, [])
   );
 
-  const ensureDirectory = async () => {
-    if (Platform.OS === "ios") {
-      try {
-        // Create a test key to ensure directory exists
-        await AsyncStorage.setItem("@test_key", "test");
-        await AsyncStorage.removeItem("@test_key");
-      } catch (error) {
-        console.warn("Error ensuring directory exists:", error);
-      }
-    }
-  };
-
   const loadSavedData = async () => {
     try {
-      await ensureDirectory();
-
       const [savedGoals, savedMeals] = await Promise.all([
         AsyncStorage.getItem("@daily_goals"),
         AsyncStorage.getItem("@today_meals"),
@@ -60,49 +45,60 @@ export const useFoodData = () => {
         calculateTodaysMacros(parsedMeals);
       }
     } catch (error) {
-      console.warn("Error loading saved data:", error);
-      // Set default values if loading fails
-      setDailyGoals({
-        calories: 2000,
-        protein: 150,
-        carbs: 250,
-        fat: 65,
-      });
-      setMeals([]);
-      setTodaysMacros({
-        calories: 0,
-        protein: 0,
-        carbs: 0,
-        fat: 0,
-      });
+      console.error("Error loading saved data:", error);
+      Alert.alert(
+        "Error",
+        "There was a problem loading your saved data. Please try again."
+      );
     }
   };
 
   const calculateTodaysMacros = (mealsList) => {
     const totals = mealsList.reduce(
       (acc, meal) => ({
-        calories: acc.calories + meal.calories,
-        protein: acc.protein + meal.protein,
-        carbs: acc.carbs + meal.carbs,
-        fat: acc.fat + meal.fat,
+        calories: +(acc.calories + meal.calories).toFixed(1),
+        protein: +(acc.protein + meal.protein).toFixed(1),
+        carbs: +(acc.carbs + meal.carbs).toFixed(1),
+        fat: +(acc.fat + meal.fat).toFixed(1),
       }),
       { calories: 0, protein: 0, carbs: 0, fat: 0 }
     );
     setTodaysMacros(totals);
   };
 
-  const handleAddFood = async (selectedFood) => {
+  const updateDailyGoals = async (newGoals) => {
     try {
-      if (!selectedFood) return;
+      await AsyncStorage.setItem("@daily_goals", JSON.stringify(newGoals));
+      setDailyGoals(newGoals);
+    } catch (error) {
+      console.error("Error saving daily goals:", error);
+      Alert.alert(
+        "Error",
+        "There was a problem saving your goals. Please try again."
+      );
+    }
+  };
 
+  const addMeal = async (selectedFood, servings = 1) => {
+    try {
       const newMeal = {
         id: Date.now().toString(),
         name: selectedFood.description,
-        calories: getNutrientValue(selectedFood, "Energy"),
-        protein: getNutrientValue(selectedFood, "Protein"),
-        carbs: getNutrientValue(selectedFood, "Carbohydrate, by difference"),
-        fat: getNutrientValue(selectedFood, "Total lipid (fat)"),
-        servingSize: selectedFood.servingSize || 100,
+        calories: +(
+          getNutrientValue(selectedFood, "Energy") * servings
+        ).toFixed(1),
+        protein: +(
+          getNutrientValue(selectedFood, "Protein") * servings
+        ).toFixed(1),
+        carbs: +(
+          getNutrientValue(selectedFood, "Carbohydrate, by difference") *
+          servings
+        ).toFixed(1),
+        fat: +(
+          getNutrientValue(selectedFood, "Total lipid (fat)") * servings
+        ).toFixed(1),
+        servingSize: +(selectedFood.servingSize || 100).toFixed(1),
+        servings: +servings.toFixed(1),
         timestamp: new Date().toISOString(),
       };
 
@@ -110,12 +106,13 @@ export const useFoodData = () => {
       await AsyncStorage.setItem("@today_meals", JSON.stringify(updatedMeals));
       setMeals(updatedMeals);
       calculateTodaysMacros(updatedMeals);
+
       return true;
     } catch (error) {
-      console.error("Error adding food:", error);
+      console.error("Error adding meal:", error);
       Alert.alert(
         "Error",
-        "There was a problem adding the food. Please try again."
+        "There was a problem adding your meal. Please try again."
       );
       return false;
     }
@@ -127,6 +124,7 @@ export const useFoodData = () => {
       await AsyncStorage.setItem("@today_meals", JSON.stringify(updatedMeals));
       setMeals(updatedMeals);
       calculateTodaysMacros(updatedMeals);
+
       return true;
     } catch (error) {
       console.error("Error deleting meal:", error);
@@ -138,13 +136,54 @@ export const useFoodData = () => {
     }
   };
 
+  const clearAllMeals = async () => {
+    try {
+      await AsyncStorage.removeItem("@today_meals");
+      setMeals([]);
+      calculateTodaysMacros([]);
+
+      return true;
+    } catch (error) {
+      console.error("Error clearing meals:", error);
+      Alert.alert(
+        "Error",
+        "There was a problem clearing your meals. Please try again."
+      );
+      return false;
+    }
+  };
+
+  const getMealsByDate = async (date) => {
+    try {
+      const savedMeals = await AsyncStorage.getItem("@today_meals");
+      if (savedMeals) {
+        const allMeals = JSON.parse(savedMeals);
+        const dayStart = new Date(date);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(date);
+        dayEnd.setHours(23, 59, 59, 999);
+
+        return allMeals.filter((meal) => {
+          const mealDate = new Date(meal.timestamp);
+          return mealDate >= dayStart && mealDate <= dayEnd;
+        });
+      }
+      return [];
+    } catch (error) {
+      console.error("Error getting meals by date:", error);
+      return [];
+    }
+  };
+
   return {
     dailyGoals,
     todaysMacros,
     meals,
-    setDailyGoals,
-    handleAddFood,
+    updateDailyGoals,
+    addMeal,
     deleteMeal,
+    clearAllMeals,
     calculateTodaysMacros,
+    getMealsByDate,
   };
 };
