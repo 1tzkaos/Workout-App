@@ -18,7 +18,7 @@ import ExerciseDetailScreen from "./screens/ExerciseDetailScreen";
 import AddSetScreen from "./screens/AddSetScreen";
 import AnalyticsScreen from "./screens/AnalyticsScreen";
 import AddExerciseScreen from "./screens/AddExerciseScreen";
-import FoodScreen from "./screens/FoodScreen";
+import FoodScreen from "./screens/FoodScreen/index";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
