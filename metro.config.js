@@ -1,7 +1,12 @@
-// Learn more https://docs.expo.io/guides/customizing-metro
-const { getDefaultConfig } = require('expo/metro-config');
+const { getDefaultConfig } = require("expo/metro-config");
 
 /** @type {import('expo/metro-config').MetroConfig} */
-const config = getDefaultConfig(__dirname);
+const config = getDefaultConfig(__dirname, {
+  // Enable the new architecture
+  useHermes: true,
+});
+
+// Add any additional configuration
+config.resolver.sourceExts = [...config.resolver.sourceExts, "mjs"];
 
 module.exports = config;

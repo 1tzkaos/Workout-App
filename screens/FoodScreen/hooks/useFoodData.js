@@ -1,9 +1,10 @@
 // src/screens/FoodScreen/hooks/useFoodData.js
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { Alert } from "react-native";
 import { getNutrientValue } from "../utils/nutrition";
+import { Platform } from "react-native";
 
 export const useFoodData = () => {
   const [dailyGoals, setDailyGoals] = useState({
@@ -28,8 +29,22 @@ export const useFoodData = () => {
     }, [])
   );
 
+  const ensureDirectory = async () => {
+    if (Platform.OS === "ios") {
+      try {
+        // Create a test key to ensure directory exists
+        await AsyncStorage.setItem("@test_key", "test");
+        await AsyncStorage.removeItem("@test_key");
+      } catch (error) {
+        console.warn("Error ensuring directory exists:", error);
+      }
+    }
+  };
+
   const loadSavedData = async () => {
     try {
+      await ensureDirectory();
+
       const [savedGoals, savedMeals] = await Promise.all([
         AsyncStorage.getItem("@daily_goals"),
         AsyncStorage.getItem("@today_meals"),
@@ -45,11 +60,21 @@ export const useFoodData = () => {
         calculateTodaysMacros(parsedMeals);
       }
     } catch (error) {
-      console.error("Error loading saved data:", error);
-      Alert.alert(
-        "Error",
-        "There was a problem loading your saved data. Please try again."
-      );
+      console.warn("Error loading saved data:", error);
+      // Set default values if loading fails
+      setDailyGoals({
+        calories: 2000,
+        protein: 150,
+        carbs: 250,
+        fat: 65,
+      });
+      setMeals([]);
+      setTodaysMacros({
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0,
+      });
     }
   };
 

@@ -1,13 +1,23 @@
 {
   "expo": {
-    "name": "WorkoutTracker",
-    "slug": "WorkoutTracker",
+    "name": "workouttracker",
+    "slug": "workouttracker",
     "version": "1.0.0",
-    "android": {
-      "package": "workout.android"
-    },
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "assetBundlePatterns": ["**/*"],
     "ios": {
-      "bundleIdentifier": "workout.ios"
-    }
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#121212"
+      }
+    },
+    "plugins": ["expo-font"],
+    "experiments": {
+      "tsconfigPaths": true
+    },
+    "newArchEnabled": true
   }
 }
