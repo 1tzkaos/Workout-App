@@ -2,7 +2,7 @@
 import { StyleSheet } from "react-native";
 
 export default StyleSheet.create({
-  // Add these to your styles.js file
+  // Add these to your styles.js file if not already present
   servingSizeContainer: {
     marginVertical: 16,
   },
@@ -45,6 +45,97 @@ export default StyleSheet.create({
     fontSize: 14,
     marginTop: 4,
   },
+  servingsInput: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "600",
+    textAlign: "center",
+    minWidth: 80,
+    padding: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: "#3498db",
+  },
+  nutritionModalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  nutritionModalContent: {
+    backgroundColor: "#1E1E1E",
+    borderRadius: 16,
+    padding: 20,
+    width: "90%",
+    maxWidth: 400,
+    maxHeight: "80%",
+  },
+  nutritionModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  nutritionModalTitle: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  closeButton: {
+    padding: 4,
+  },
+  foodTitle: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  nutritionDivider: {
+    height: 1,
+    backgroundColor: "#2D2D2D",
+    marginVertical: 8,
+  },
+  nutritionLargeDivider: {
+    height: 8,
+    backgroundColor: "#2D2D2D",
+    marginVertical: 12,
+  },
+  nutritionItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginVertical: 8,
+  },
+  nutritionSubItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginVertical: 8,
+    paddingLeft: 20,
+  },
+  nutritionLabel: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  nutritionSubLabel: {
+    color: "#B3B3B3",
+    fontSize: 16,
+  },
+  nutritionValue: {
+    color: "#FFFFFF",
+    fontSize: 16,
+  },
+  addFoodButton: {
+    backgroundColor: "#3498db",
+    padding: 16,
+    borderRadius: 8,
+    marginTop: 20,
+  },
+  addFoodButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+
   container: {
     flex: 1,
     backgroundColor: "#121212",
@@ -266,91 +357,13 @@ export default StyleSheet.create({
     alignItems: "center",
   },
   // Nutrition Modal Styles
-  nutritionModalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  nutritionModalContent: {
-    backgroundColor: "#1E1E1E",
-    borderRadius: 16,
-    padding: 20,
-    width: "90%",
-    maxWidth: 400,
-    maxHeight: "80%",
-  },
-  nutritionModalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  nutritionModalTitle: {
-    color: "#FFFFFF",
-    fontSize: 24,
-    fontWeight: "bold",
-  },
-  closeButton: {
-    padding: 4,
-  },
-  foodTitle: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 8,
-  },
+
   servingSize: {
     color: "#8E8E93",
     fontSize: 16,
     marginBottom: 16,
   },
-  nutritionDivider: {
-    height: 1,
-    backgroundColor: "#2D2D2D",
-    marginVertical: 8,
-  },
-  nutritionLargeDivider: {
-    height: 8,
-    backgroundColor: "#2D2D2D",
-    marginVertical: 12,
-  },
-  nutritionItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginVertical: 8,
-  },
-  nutritionSubItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginVertical: 8,
-    paddingLeft: 20,
-  },
-  nutritionLabel: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  nutritionSubLabel: {
-    color: "#B3B3B3",
-    fontSize: 16,
-  },
-  nutritionValue: {
-    color: "#FFFFFF",
-    fontSize: 16,
-  },
-  addFoodButton: {
-    backgroundColor: "#3498db",
-    padding: 16,
-    borderRadius: 8,
-    marginTop: 20,
-  },
-  addFoodButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-    textAlign: "center",
-  },
+
   // Macro Distribution Styles
   macroDistributionContainer: {
     marginVertical: 16,

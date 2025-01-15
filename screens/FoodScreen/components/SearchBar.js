@@ -1,6 +1,11 @@
 // src/screens/FoodScreen/components/SearchBar.js
 import React from "react";
-import { View, TextInput, ActivityIndicator } from "react-native";
+import {
+  View,
+  TextInput,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import styles from "../styles";
 
@@ -9,6 +14,7 @@ export default function SearchBar({
   isSearching,
   onChangeText,
   onSubmit,
+  onScanPress,
 }) {
   return (
     <View style={styles.searchContainer}>
@@ -25,12 +31,20 @@ export default function SearchBar({
         autoCapitalize="none"
         autoCorrect={false}
       />
-      {isSearching && (
+      {isSearching ? (
         <ActivityIndicator
           size="small"
           color="#3498db"
           style={{ marginLeft: 8 }}
         />
+      ) : (
+        <TouchableOpacity onPress={onScanPress}>
+          <MaterialCommunityIcons
+            name="barcode-scan"
+            size={24}
+            color="#3498db"
+          />
+        </TouchableOpacity>
       )}
     </View>
   );

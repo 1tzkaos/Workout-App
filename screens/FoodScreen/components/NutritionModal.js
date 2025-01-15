@@ -1,6 +1,15 @@
 // src/screens/FoodScreen/components/NutritionModal.js
 import React, { useState, useEffect } from "react";
-import { View, Text, Modal, TouchableOpacity, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  Modal,
+  TouchableOpacity,
+  ScrollView,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { getNutrientValue } from "../utils/nutrition";
 import MacroDistribution from "./MacroDistribution";
@@ -8,10 +17,14 @@ import styles from "../styles";
 
 export default function NutritionModal({ visible, food, onAdd, onClose }) {
   const [servings, setServings] = useState(1);
+  const [isEditingServings, setIsEditingServings] = useState(false);
+  const [tempServings, setTempServings] = useState("1");
 
   useEffect(() => {
     if (visible) {
       setServings(1);
+      setTempServings("1");
+      setIsEditingServings(false);
     }
   }, [visible]);
 
@@ -22,7 +35,47 @@ export default function NutritionModal({ visible, food, onAdd, onClose }) {
   };
 
   const adjustServings = (increment) => {
-    setServings((prev) => Math.max(1, +(prev + increment).toFixed(1)));
+    setServings((prev) => {
+      const newValue = Math.max(0.001, prev + increment);
+      setTempServings(formatServingsDisplay(newValue));
+      return newValue;
+    });
+  };
+  const handleServingsSubmit = () => {
+    const newValue = parseFloat(tempServings);
+    if (!isNaN(newValue) && newValue > 0) {
+      // Round to 3 decimal places if more are entered
+      const roundedValue = Math.min(
+        999.999,
+        Math.max(0.001, parseFloat(newValue.toFixed(3)))
+      );
+      setServings(roundedValue);
+      setTempServings(formatServingsDisplay(roundedValue));
+    } else {
+      setTempServings(formatServingsDisplay(servings));
+    }
+    setIsEditingServings(false);
+  };
+
+  const formatServingsDisplay = (value) => {
+    if (Number.isInteger(value)) {
+      return value.toString();
+    }
+
+    // Convert to string and remove trailing zeros
+    const strValue = value.toString();
+    const [whole, decimal] = strValue.split(".");
+
+    if (!decimal) return whole;
+
+    // Trim trailing zeros from decimal part
+    const trimmedDecimal = decimal.replace(/0+$/, "");
+
+    if (trimmedDecimal.length === 0) {
+      return whole;
+    }
+
+    return `${whole}.${trimmedDecimal}`;
   };
 
   const getAdjustedNutrientValue = (nutrientName) => {
@@ -31,7 +84,10 @@ export default function NutritionModal({ visible, food, onAdd, onClose }) {
 
   return (
     <Modal visible={visible} animationType="slide" transparent={true}>
-      <View style={styles.nutritionModalContainer}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.nutritionModalContainer}
+      >
         <View style={styles.nutritionModalContent}>
           <View style={styles.nutritionModalHeader}>
             <Text style={styles.nutritionModalTitle}>Nutrition Facts</Text>
@@ -43,7 +99,6 @@ export default function NutritionModal({ visible, food, onAdd, onClose }) {
           <ScrollView>
             <Text style={styles.foodTitle}>{food.description}</Text>
 
-            {/* Serving Size Controls */}
             <View style={styles.servingSizeContainer}>
               <Text style={styles.servingSizeLabel}>
                 Serving size: {(food.servingSize || 100).toFixed(1)}g
@@ -55,12 +110,34 @@ export default function NutritionModal({ visible, food, onAdd, onClose }) {
                 >
                   <Text style={styles.servingButtonText}>-</Text>
                 </TouchableOpacity>
+
                 <View style={styles.servingsDisplay}>
-                  <Text style={styles.servingsValue}>
-                    {servings.toFixed(0)}
-                  </Text>
+                  {isEditingServings ? (
+                    <TextInput
+                      style={styles.servingsInput}
+                      value={tempServings}
+                      onChangeText={setTempServings}
+                      keyboardType="decimal-pad"
+                      autoFocus
+                      selectTextOnFocus
+                      onBlur={handleServingsSubmit}
+                      onSubmitEditing={handleServingsSubmit}
+                    />
+                  ) : (
+                    <TouchableOpacity
+                      onPress={() => {
+                        setIsEditingServings(true);
+                        setTempServings(formatServingsDisplay(servings));
+                      }}
+                    >
+                      <Text style={styles.servingsValue}>
+                        {formatServingsDisplay(servings)}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                   <Text style={styles.servingsLabel}>servings</Text>
                 </View>
+
                 <TouchableOpacity
                   style={styles.servingButton}
                   onPress={() => adjustServings(1)}
@@ -126,7 +203,7 @@ export default function NutritionModal({ visible, food, onAdd, onClose }) {
             <Text style={styles.addFoodButtonText}>Add Food</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

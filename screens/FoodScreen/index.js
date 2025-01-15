@@ -10,6 +10,7 @@ import MealsList from "./components/MealsList";
 import GoalsModal from "./components/GoalsModal";
 import SearchResultsModal from "./components/SearchResultsModal";
 import NutritionModal from "./components/NutritionModal";
+import BarcodeScannerModal from "./components/BarcodeScannerModal";
 import { useFoodData } from "./hooks/useFoodData";
 import { useSearch } from "./hooks/useSearch";
 import styles from "./styles";
@@ -30,12 +31,15 @@ export default function FoodScreen() {
     searchResults,
     isSearching,
     selectedFood,
+    showScanner,
     setSearchQuery,
     searchFood,
+    searchByBarcode,
     handleFoodSelect,
     clearSearch,
     setSelectedFood,
     setSearchResults,
+    setShowScanner,
   } = useSearch();
 
   const [showGoalsModal, setShowGoalsModal] = useState(false);
@@ -45,7 +49,6 @@ export default function FoodScreen() {
   const closeAllModals = () => {
     setShowSearchResults(false);
     setShowNutritionModal(false);
-
     setSelectedFood(null);
     setSearchQuery("");
     setSearchResults([]);
@@ -70,6 +73,11 @@ export default function FoodScreen() {
     closeAllModals();
   };
 
+  const handleBarcodeScan = async (barcode) => {
+    await searchByBarcode(barcode);
+    setShowSearchResults(true);
+  };
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -85,6 +93,7 @@ export default function FoodScreen() {
             setShowSearchResults(true);
             searchFood();
           }}
+          onScanPress={() => setShowScanner(true)}
         />
         <MealsList meals={meals} onDelete={deleteMeal} />
 
@@ -113,6 +122,12 @@ export default function FoodScreen() {
           food={selectedFood}
           onAdd={handleAddFood}
           onClose={handleCloseNutritionModal}
+        />
+
+        <BarcodeScannerModal
+          visible={showScanner}
+          onClose={() => setShowScanner(false)}
+          onScan={handleBarcodeScan}
         />
       </View>
     </GestureHandlerRootView>

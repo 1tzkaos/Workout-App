@@ -11,6 +11,7 @@ export const useSearch = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [selectedFood, setSelectedFood] = useState(null);
   const [recentSearches, setRecentSearches] = useState([]);
+  const [showScanner, setShowScanner] = useState(false);
 
   const searchFood = async () => {
     if (!searchQuery.trim()) {
@@ -37,32 +38,7 @@ export const useSearch = () => {
       }
 
       const data = await response.json();
-
-      if (!data.foods || data.foods.length === 0) {
-        Alert.alert("No Results", "No foods found matching your search.");
-        setSearchResults([]);
-        return;
-      }
-
-      // Update recent searches
-      const updatedRecentSearches = [
-        searchQuery,
-        ...recentSearches.filter((search) => search !== searchQuery),
-      ].slice(0, 5);
-      setRecentSearches(updatedRecentSearches);
-
-      // Filter out entries with missing crucial nutritional data
-      const validResults = data.foods.filter((food) => {
-        const hasEnergy = food.foodNutrients.some(
-          (n) => n.nutrientName === "Energy"
-        );
-        const hasProtein = food.foodNutrients.some(
-          (n) => n.nutrientName === "Protein"
-        );
-        return hasEnergy && hasProtein;
-      });
-
-      setSearchResults(validResults);
+      handleSearchResults(data);
     } catch (error) {
       console.error("Error searching USDA database:", error);
       Alert.alert(
@@ -72,6 +48,67 @@ export const useSearch = () => {
     } finally {
       setIsSearching(false);
     }
+  };
+
+  const searchByBarcode = async (barcode) => {
+    setIsSearching(true);
+    try {
+      const response = await fetch(
+        `${USDA_API_ENDPOINT}/foods/search?api_key=${USDA_API_KEY}&query=${barcode}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      handleSearchResults(data);
+
+      // Close scanner after successful scan
+      setShowScanner(false);
+    } catch (error) {
+      console.error("Error searching by barcode:", error);
+      Alert.alert(
+        "Error",
+        "No products found with this barcode. Try searching by name instead."
+      );
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSearchResults = (data) => {
+    if (!data.foods || data.foods.length === 0) {
+      Alert.alert("No Results", "No foods found matching your search.");
+      setSearchResults([]);
+      return;
+    }
+
+    // Update recent searches
+    const updatedRecentSearches = [
+      searchQuery,
+      ...recentSearches.filter((search) => search !== searchQuery),
+    ].slice(0, 5);
+    setRecentSearches(updatedRecentSearches);
+
+    // Filter out entries with missing crucial nutritional data
+    const validResults = data.foods.filter((food) => {
+      const hasEnergy = food.foodNutrients.some(
+        (n) => n.nutrientName === "Energy"
+      );
+      const hasProtein = food.foodNutrients.some(
+        (n) => n.nutrientName === "Protein"
+      );
+      return hasEnergy && hasProtein;
+    });
+
+    setSearchResults(validResults);
   };
 
   const handleFoodSelect = (food) => {
@@ -90,11 +127,14 @@ export const useSearch = () => {
     isSearching,
     selectedFood,
     recentSearches,
+    showScanner,
     setSearchQuery,
-    setSearchResults, // Add this
+    setSearchResults,
     searchFood,
+    searchByBarcode,
     handleFoodSelect,
     clearSearch,
     setSelectedFood,
+    setShowScanner,
   };
 };

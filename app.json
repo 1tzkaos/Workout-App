@@ -7,14 +7,23 @@
     "userInterfaceStyle": "dark",
     "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to scan barcodes on food items."
+      },
+      "bundleIdentifier": "com.anonymous.workouttracker"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#121212"
-      }
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.anonymous.workouttracker"
     },
-    "plugins": ["expo-font"],
+    "plugins": ["expo-font", "expo-camera"],
     "experiments": {
       "tsconfigPaths": true
     },
