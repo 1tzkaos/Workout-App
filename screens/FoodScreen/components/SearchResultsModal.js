@@ -1,9 +1,8 @@
-// src/screens/FoodScreen/components/SearchResultsModal.js
+// SearchResultsModal.js
 import React from "react";
 import {
   View,
   Text,
-  Modal,
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
@@ -19,9 +18,32 @@ export default function SearchResultsModal({
   onSelect,
   onClose,
 }) {
+  const handleSelect = (food) => {
+    console.log("Step 0 - SearchResultsModal handleSelect:", food?.description);
+    if (onSelect) {
+      onSelect(food);
+    }
+  };
+
+  if (!visible) return null;
+
   return (
-    <Modal visible={visible} animationType="slide" transparent={true}>
-      <View style={styles.searchResultsContainer}>
+    visible && (
+      <View
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          maxHeight: "80%",
+          backgroundColor: "#1E1E1E",
+          borderTopLeftRadius: 20,
+          borderTopRightRadius: 20,
+          zIndex: 1,
+          padding: 20,
+        }}
+      >
+        {/* Header */}
         <View style={styles.searchResultsHeader}>
           <Text style={styles.searchResultsTitle}>Search Results</Text>
           <TouchableOpacity onPress={onClose} style={styles.closeSearchButton}>
@@ -29,6 +51,7 @@ export default function SearchResultsModal({
           </TouchableOpacity>
         </View>
 
+        {/* Results List */}
         {isSearching ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#3498db" />
@@ -39,7 +62,7 @@ export default function SearchResultsModal({
               <TouchableOpacity
                 key={food.fdcId}
                 style={styles.searchResultItem}
-                onPress={() => onSelect(food)}
+                onPress={() => handleSelect(food)}
               >
                 <Text style={styles.foodName}>{food.description}</Text>
                 <View style={styles.macroRow}>
@@ -64,6 +87,6 @@ export default function SearchResultsModal({
           </ScrollView>
         )}
       </View>
-    </Modal>
+    )
   );
 }

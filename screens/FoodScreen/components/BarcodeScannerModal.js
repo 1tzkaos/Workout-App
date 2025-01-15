@@ -1,167 +1,141 @@
-// src/screens/FoodScreen/components/BarcodeScannerModal.js
-import React, { useState, useEffect } from "react";
+// components/BarcodeScannerModal.js
+import React, { useState } from "react";
 import {
-  Modal,
-  StyleSheet,
   View,
   Text,
   TouchableOpacity,
   TextInput,
-  Platform,
-  KeyboardAvoidingView,
+  StyleSheet,
+  Modal,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function BarcodeScannerModal({ visible, onClose, onScan }) {
-  const [mockBarcode, setMockBarcode] = useState("");
+  const insets = useSafeAreaInsets();
+  const [barcode, setBarcode] = useState("");
 
-  useEffect(() => {
-    if (visible) {
-      setMockBarcode("");
-    }
-  }, [visible]);
-
-  const handleMockSubmit = () => {
-    if (mockBarcode.trim()) {
-      onScan(mockBarcode.trim());
-      onClose();
+  const handleSubmit = () => {
+    if (barcode.trim()) {
+      Keyboard.dismiss();
+      onScan(barcode.trim());
+      setBarcode("");
     }
   };
+
+  const handleCancel = () => {
+    Keyboard.dismiss();
+    setBarcode("");
+    onClose();
+  };
+
+  if (!visible) return null;
 
   return (
     <Modal
       visible={visible}
-      animationType="slide"
       transparent={true}
-      onRequestClose={onClose}
+      onRequestClose={handleCancel}
+      animationType="fade"
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.centeredView}
-      >
-        <View style={styles.modalView}>
-          <View style={styles.headerContainer}>
-            <Text style={styles.modalTitle}>Scan Barcode</Text>
-            <TouchableOpacity onPress={onClose}>
-              <MaterialCommunityIcons name="close" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
+      <TouchableWithoutFeedback onPress={handleCancel}>
+        <View style={styles.overlay}>
+          <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+            <View style={[styles.modalContent, { marginTop: insets.top }]}>
+              <View style={styles.header}>
+                <Text style={styles.title}>Enter Barcode</Text>
+                <TouchableOpacity onPress={handleCancel}>
+                  <MaterialCommunityIcons
+                    name="close"
+                    size={24}
+                    color="#FFFFFF"
+                  />
+                </TouchableOpacity>
+              </View>
 
-          <Text style={styles.modalSubtitle}>
-            Enter a barcode number for testing
-          </Text>
+              <TextInput
+                style={styles.input}
+                value={barcode}
+                onChangeText={setBarcode}
+                placeholder="Enter barcode number"
+                placeholderTextColor="#666666"
+                keyboardType="number-pad"
+                maxLength={13}
+                returnKeyType="done"
+                onSubmitEditing={handleSubmit}
+                autoFocus
+              />
 
-          <TextInput
-            style={styles.mockInput}
-            value={mockBarcode}
-            onChangeText={setMockBarcode}
-            placeholder="Enter barcode number"
-            placeholderTextColor="#666"
-            keyboardType="number-pad"
-            autoFocus
-            returnKeyType="done"
-            onSubmitEditing={handleMockSubmit}
-          />
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={handleSubmit}
+              >
+                <Text style={styles.submitText}>Submit</Text>
+              </TouchableOpacity>
 
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
-              onPress={onClose}
-            >
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.button, styles.submitButton]}
-              onPress={handleMockSubmit}
-            >
-              <Text style={styles.buttonText}>Submit</Text>
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.simulatorNote}>
-            Sample barcodes for testing:{"\n"}
-            049000000443 (Coca-Cola){"\n"}
-            038000138416 (Kellogg's Corn Flakes){"\n"}
-            011110038364 (Nature Valley)
-          </Text>
+              <Text style={styles.sampleText}>
+                Sample barcodes:{"\n"}
+                049000000443 - Coca-Cola{"\n"}
+                038000138416 - Kellogg's{"\n"}
+                011110038364 - Nature Valley
+              </Text>
+            </View>
+          </TouchableWithoutFeedback>
         </View>
-      </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  centeredView: {
+  overlay: {
     flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
   },
-  modalView: {
+  modalContent: {
+    backgroundColor: "#1E1E1E",
+    borderRadius: 16,
     width: "90%",
     maxWidth: 400,
-    backgroundColor: "#1E1E1E",
-    borderRadius: 20,
-    padding: 25,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    padding: 20,
+    alignItems: "stretch",
   },
-  headerContainer: {
+  header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 20,
   },
-  modalTitle: {
-    color: "#FFFFFF",
+  title: {
     fontSize: 20,
     fontWeight: "bold",
+    color: "#FFFFFF",
   },
-  modalSubtitle: {
-    color: "#B3B3B3",
-    fontSize: 16,
-    marginBottom: 20,
-  },
-  mockInput: {
-    width: "100%",
+  input: {
     backgroundColor: "#2C2C2E",
-    borderRadius: 10,
-    padding: 15,
+    borderRadius: 8,
+    padding: 12,
     color: "#FFFFFF",
     fontSize: 16,
     marginBottom: 20,
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 10,
-  },
-  button: {
-    flex: 1,
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  cancelButton: {
-    backgroundColor: "#2C2C2E",
   },
   submitButton: {
     backgroundColor: "#3498db",
+    borderRadius: 8,
+    padding: 14,
+    alignItems: "center",
   },
-  buttonText: {
+  submitText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
   },
-  simulatorNote: {
-    color: "#666",
+  sampleText: {
+    color: "#666666",
     fontSize: 12,
     textAlign: "center",
     marginTop: 20,

@@ -2,7 +2,40 @@
 import { StyleSheet } from "react-native";
 
 export default StyleSheet.create({
-  // Add these to your styles.js file if not already present
+  // In styles.js, add or update:
+  nutritionModalContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 999,
+  },
+
+  nutritionModalContent: {
+    backgroundColor: "#1E1E1E",
+    borderRadius: 16,
+    padding: 20,
+    width: "90%",
+    maxWidth: 400,
+    maxHeight: "80%",
+  },
+
+  searchResultsContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#1E1E1E",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: "80%",
+    zIndex: 1,
+  },
   servingSizeContainer: {
     marginVertical: 16,
   },
@@ -54,20 +87,6 @@ export default StyleSheet.create({
     padding: 4,
     borderBottomWidth: 1,
     borderBottomColor: "#3498db",
-  },
-  nutritionModalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  nutritionModalContent: {
-    backgroundColor: "#1E1E1E",
-    borderRadius: 16,
-    padding: 20,
-    width: "90%",
-    maxWidth: 400,
-    maxHeight: "80%",
   },
   nutritionModalHeader: {
     flexDirection: "row",
@@ -303,14 +322,6 @@ export default StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     textAlign: "center",
-  },
-  searchResultsContainer: {
-    flex: 1,
-    marginTop: "50%",
-    backgroundColor: "#1E1E1E",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
   },
   searchResultsHeader: {
     flexDirection: "row",
