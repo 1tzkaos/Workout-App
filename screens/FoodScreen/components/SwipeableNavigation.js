@@ -14,15 +14,24 @@ export function SwipeableNavigator({ children, navigation }) {
     prev: null,
     next: null,
   });
+  const [canSwipe, setCanSwipe] = useState({
+    left: false,
+    right: false,
+  });
 
   useEffect(() => {
     const state = navigation.getState();
     const index = state.index;
     const routes = state.routes;
 
+    // Update screens and swipe capabilities
     setScreens({
       prev: index > 0 ? routes[index - 1].name : null,
       next: index < routes.length - 1 ? routes[index + 1].name : null,
+    });
+    setCanSwipe({
+      left: index > 0,
+      right: index < routes.length - 1,
     });
   }, [navigation]);
 
@@ -43,32 +52,42 @@ export function SwipeableNavigator({ children, navigation }) {
 
   const panResponder = useRef(
     PanResponder.create({
+      // Sensitive to horizontal movement
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 20 && Math.abs(gestureState.dy) < 50;
+        return (
+          Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dy) < 100
+        );
       },
       onPanResponderMove: (_, gestureState) => {
+        // Allow moving if swiping left and right screens exist
         if (
-          (!screens.prev && gestureState.dx > 0) ||
-          (!screens.next && gestureState.dx < 0)
+          (gestureState.dx > 0 && canSwipe.left) ||
+          (gestureState.dx < 0 && canSwipe.right)
         ) {
-          pan.setValue(gestureState.dx / 3); // Add resistance when no screen available
-        } else {
           pan.setValue(gestureState.dx);
+        } else {
+          // Add some resistance if trying to swipe beyond available screens
+          pan.setValue(gestureState.dx / 3);
         }
       },
       onPanResponderRelease: (_, gestureState) => {
-        if (Math.abs(gestureState.dx) > layout.width * 0.4) {
-          const navigateTo = gestureState.dx > 0 ? screens.prev : screens.next;
+        const { dx } = gestureState;
+        const screenWidth = layout.width;
+
+        // Navigate if swiped more than 40% of screen width
+        if (Math.abs(dx) > screenWidth * 0.4) {
+          const navigateTo = dx > 0 ? screens.prev : screens.next;
           if (navigateTo) {
             navigation.navigate(navigateTo);
           }
         }
 
+        // Always spring back to original position
         Animated.spring(pan, {
           toValue: 0,
           useNativeDriver: true,
-          tension: 65,
-          friction: 11,
+          tension: 10,
+          friction: 3,
         }).start();
       },
     })
