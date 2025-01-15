@@ -1,5 +1,5 @@
 // src/screens/FoodScreen/components/NutritionModal.js
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, Modal, TouchableOpacity, ScrollView } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { getNutrientValue } from "../utils/nutrition";
@@ -8,6 +8,12 @@ import styles from "../styles";
 
 export default function NutritionModal({ visible, food, onAdd, onClose }) {
   const [servings, setServings] = useState(1);
+
+  useEffect(() => {
+    if (visible) {
+      setServings(1);
+    }
+  }, [visible]);
 
   if (!food) return null;
 
@@ -51,7 +57,7 @@ export default function NutritionModal({ visible, food, onAdd, onClose }) {
                 </TouchableOpacity>
                 <View style={styles.servingsDisplay}>
                   <Text style={styles.servingsValue}>
-                    {servings.toFixed(1)}
+                    {servings.toFixed(0)}
                   </Text>
                   <Text style={styles.servingsLabel}>servings</Text>
                 </View>

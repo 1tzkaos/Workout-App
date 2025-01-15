@@ -1,5 +1,3 @@
-
-
 // src/screens/FoodScreen/hooks/useSearch.js
 import { useState } from "react";
 import { Alert } from "react-native";
@@ -86,14 +84,6 @@ export const useSearch = () => {
     setSelectedFood(null);
   };
 
-  const getRecentSearches = () => {
-    return recentSearches;
-  };
-
-  const clearRecentSearches = () => {
-    setRecentSearches([]);
-  };
-
   return {
     searchQuery,
     searchResults,
@@ -101,10 +91,10 @@ export const useSearch = () => {
     selectedFood,
     recentSearches,
     setSearchQuery,
+    setSearchResults, // Add this
     searchFood,
     handleFoodSelect,
     clearSearch,
-    getRecentSearches,
-    clearRecentSearches,
+    setSelectedFood,
   };
 };

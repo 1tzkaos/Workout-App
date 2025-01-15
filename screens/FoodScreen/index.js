@@ -14,15 +14,15 @@ import { useFoodData } from "./hooks/useFoodData";
 import { useSearch } from "./hooks/useSearch";
 import styles from "./styles";
 
-const FoodScreen = () => {
+export default function FoodScreen() {
   const insets = useSafeAreaInsets();
   const {
     dailyGoals,
     todaysMacros,
     meals,
     setDailyGoals,
-    handleAddFood,
     deleteMeal,
+    addMeal,
   } = useFoodData();
 
   const {
@@ -34,24 +34,40 @@ const FoodScreen = () => {
     searchFood,
     handleFoodSelect,
     clearSearch,
+    setSelectedFood,
+    setSearchResults,
   } = useSearch();
 
   const [showGoalsModal, setShowGoalsModal] = useState(false);
   const [showNutritionModal, setShowNutritionModal] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
-  const handleFoodSelection = (food) => {
-    handleFoodSelect(food);
-    setShowNutritionModal(true);
+  const closeAllModals = () => {
+    setShowSearchResults(false);
+    setShowNutritionModal(false);
+
+    setSelectedFood(null);
+    setSearchQuery("");
+    setSearchResults([]);
   };
 
-  const handleAddFoodAndClose = async () => {
-    if (selectedFood) {
-      const success = await handleAddFood(selectedFood);
-      if (success) {
-        setShowNutritionModal(false);
-        clearSearch();
-      }
+  const handleAddFood = async (food, servings) => {
+    const success = await addMeal(food, servings);
+    if (success) {
+      // Close everything immediately when adding food
+      closeAllModals();
     }
+  };
+
+  const handleCloseNutritionModal = () => {
+    // Just close the nutrition modal and return to search results
+    setShowNutritionModal(false);
+    setSelectedFood(null);
+  };
+
+  const handleCloseSearchResults = () => {
+    // Close everything when closing search results
+    closeAllModals();
   };
 
   return (
@@ -60,16 +76,16 @@ const FoodScreen = () => {
         <StatusBar barStyle="light-content" />
 
         <Header onSettingsPress={() => setShowGoalsModal(true)} />
-
         <DailyProgress dailyGoals={dailyGoals} todaysMacros={todaysMacros} />
-
         <SearchBar
           searchQuery={searchQuery}
           isSearching={isSearching}
           onChangeText={setSearchQuery}
-          onSubmit={searchFood}
+          onSubmit={() => {
+            setShowSearchResults(true);
+            searchFood();
+          }}
         />
-
         <MealsList meals={meals} onDelete={deleteMeal} />
 
         <GoalsModal
@@ -80,25 +96,25 @@ const FoodScreen = () => {
         />
 
         <SearchResultsModal
-          visible={isSearching || searchResults.length > 0}
+          visible={
+            showSearchResults && (isSearching || searchResults.length > 0)
+          }
           results={searchResults}
           isSearching={isSearching}
-          onSelect={handleFoodSelection}
-          onClose={clearSearch}
+          onSelect={(food) => {
+            handleFoodSelect(food);
+            setShowNutritionModal(true);
+          }}
+          onClose={handleCloseSearchResults}
         />
 
         <NutritionModal
           visible={showNutritionModal}
           food={selectedFood}
-          onAdd={handleAddFoodAndClose}
-          onClose={() => {
-            setShowNutritionModal(false);
-            clearSearch();
-          }}
+          onAdd={handleAddFood}
+          onClose={handleCloseNutritionModal}
         />
       </View>
     </GestureHandlerRootView>
   );
-};
-
-export default FoodScreen;
+}
